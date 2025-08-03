@@ -41,7 +41,6 @@ npm install
 Erstelle eine `.env` Datei im Root-Verzeichnis:
 ```env
 DATABASE_URL="postgresql://USERNAME@localhost:5432/stonks_db?schema=public"
-NEXT_PUBLIC_BASE_URL="http://localhost:3000"
 ```
 > **Wichtig**: Ersetze `USERNAME` mit deinem echten PostgreSQL Benutzernamen
 
