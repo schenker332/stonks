@@ -1,36 +1,73 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Stonks Finance Tracker
 
-## Getting Started
-
-First, run the development server:
+## Voraussetzungen
 
 ```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+# PostgreSQL installieren
+brew install postgresql
+
+# Prisma Dependencies installieren
+npm install prisma @prisma/client
+npx prisma init --datasource-provider postgresql
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+## Setup
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+### 1. **PostgreSQL starten**
+```bash
+brew services start postgresql
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+# Status überprüfen
+brew services list
+```
 
-## Learn More
+### 2. **Datenbank & Rolle anlegen**
+```bash
+psql -U niclas -d postgres
 
-To learn more about Next.js, take a look at the following resources:
+# In der PostgreSQL Shell:
+CREATE ROLE 'USERNAME' WITH LOGIN;
+CREATE DATABASE stonks_db OWNER 'USERNAME';
+\q
+```
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+### 3. **Repo klonen & Abhängigkeiten installieren**
+```bash
+git clone git@github.com:schenker332/stonks.git
+npm install
+```
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+### 4. **Umgebungsdatei konfigurieren**
+Erstelle eine `.env` Datei im Root-Verzeichnis:
+```env
+DATABASE_URL="postgresql://USERNAME@localhost:5432/stonks_db?schema=public"
+NEXT_PUBLIC_BASE_URL="http://localhost:3000"
+```
+> **Wichtig**: Ersetze `USERNAME` mit deinem echten PostgreSQL Benutzernamen
 
-## Deploy on Vercel
+### 5. **Prisma-Client generieren & Migration ausführen**
+```bash
+# Prisma Client generieren
+npx prisma generate
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+# Datenbank Schema erstellen
+npx prisma migrate dev --name init
+```
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+### 6. **Development Server starten**
+```bash
+npm run dev
+```
+
+🎉 Öffne [http://localhost:3000](http://localhost:3000) in deinem Browser!
+
+
+
+## Entwicklung
+
+```bash
+# Prisma Studio öffnen (Datenbank GUI)
+npx prisma studio
+```
+
+
