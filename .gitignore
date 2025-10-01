@@ -52,7 +52,7 @@ __pycache__/
 src/python/shots/
 src/python/shots_cropped/
 src/python/*.png
-src/python/picsss/
+
 
 # Virtualenvs
 .venv*/
