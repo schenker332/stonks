@@ -49,8 +49,8 @@ __pycache__/
 *.pyd
 
 # Screenshots und Outputs
-src/python/shots/
-src/python/shots_cropped/
+src/python/shots/*.png
+src/python/shots_cropped/*.png
 src/python/*.png
 
 
