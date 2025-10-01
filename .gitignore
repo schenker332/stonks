@@ -41,3 +41,20 @@ yarn-error.log*
 next-env.d.ts
 
 /src/generated/prisma
+
+# Python
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+
+# Screenshots und Outputs
+src/python/shots/
+src/python/shots_cropped/
+src/python/*.png
+src/python/picsss/
+
+# Virtualenvs
+.venv*/
+venv/
+env/
