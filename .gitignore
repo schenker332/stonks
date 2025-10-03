@@ -53,6 +53,14 @@ src/python/shots/*.png
 src/python/shots_cropped/*.png
 src/python/*.png
 
+# Alle PNG-Dateien im gesamten Projekt ignorieren
+*.png
+**/*.png
+
+# Debug-Ordner
+src/python/debug/
+src/python/debug_*/
+
 
 # Virtualenvs
 .venv*/

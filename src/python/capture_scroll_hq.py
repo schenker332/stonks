@@ -18,12 +18,8 @@ from Quartz import (
 
 
 # === KONFIGURATION ===
-# Crop-Konstanten
-CROP_LEFT = 1045
-CROP_TOP_FIRST = 220      # Erstes Bild (weniger croppen)  
-CROP_TOP_OTHERS = 260     # Weitere Bilder (mehr croppen wegen Schatten)
-CROP_RIGHT = 1900
-CROP_BOTTOM = 1844
+# Crop-Konstanten - nur unten abschneiden, Rest behalten
+CROP_BOTTOM_OFFSET = 1  # Schneide nur 1 Pixel unten ab
 
 # Screenshot-Einstellungen
 MAX_FRAMES = 20
@@ -84,11 +80,10 @@ def has_changed(img1_path, img2_path, compare_height=200, threshold=5):
 
 
 def _crop_all_images(image_paths, output_dir):
-    """Croppt alle Bilder mit den definierten Crop-Konstanten."""
+    """Croppt alle Bilder - schneidet nur unten ab, Rest bleibt original."""
     
     print(f"🔪 Schneide {len(image_paths)} Bilder zu...")
-    print(f"   Bereich für erstes Bild: ({CROP_LEFT}, {CROP_TOP_FIRST}) -> ({CROP_RIGHT}, {CROP_BOTTOM})")
-    print(f"   Bereich für andere Bilder: ({CROP_LEFT}, {CROP_TOP_OTHERS}) -> ({CROP_RIGHT}, {CROP_BOTTOM})")
+    print(f"   Schneide nur {CROP_BOTTOM_OFFSET} Pixel unten ab, Rest bleibt original")
     
     cropped_paths = []
     
@@ -99,12 +94,10 @@ def _crop_all_images(image_paths, output_dir):
             print(f"❌ Konnte {img_path} nicht laden")
             continue
             
-        # Bestimmen ob erstes Bild
-        is_first_image = (i == 0)
-        top_value = CROP_TOP_FIRST if is_first_image else CROP_TOP_OTHERS
-        
-        # Cropping anwenden
-        cropped = img[top_value:CROP_BOTTOM, CROP_LEFT:CROP_RIGHT]
+        # Nur unten abschneiden, alles andere behalten
+        original_height = img.shape[0]
+        new_bottom = original_height - CROP_BOTTOM_OFFSET
+        cropped = img[0:new_bottom, :]  # Von oben bis new_bottom, alle Spalten
         
         # Gecropptes Bild speichern
         filename = f"cropped_{i:03d}.png"
@@ -112,8 +105,7 @@ def _crop_all_images(image_paths, output_dir):
         cv2.imwrite(output_path, cropped)
         cropped_paths.append(output_path)
         
-        crop_type = "erstes Bild" if is_first_image else "weiteres Bild"
-        print(f"   ✂️  {os.path.basename(img_path)} -> {filename} (top={top_value}, {crop_type})")
+        print(f"   ✂️  {os.path.basename(img_path)} -> {filename} (Original: {original_height}px, Neu: {new_bottom}px)")
     
     print(f"📁 {len(cropped_paths)} beschnittene Bilder gespeichert in: shots_cropped/")
     return cropped_paths
