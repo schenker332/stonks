@@ -64,6 +64,8 @@ def step1_basic_contour_detection():
     OG = image_RGB.copy()
     
     # Zeichne ALLE Contours zur Analyse (verschiedene Farben je nach Größe)
+    red_contour_number = 1  # Zähler nur für rote Contours
+    
     for stats in contour_stats:
         x, y, w, h = stats['x'], stats['y'], stats['w'], stats['h']
         area = stats['area']
@@ -85,10 +87,13 @@ def step1_basic_contour_detection():
         cv2.rectangle(black, (x, y), (x + w, y + h), color, thickness)
         cv2.rectangle(OG, (x, y), (x + w, y + h), color, thickness)
         
-        # Zeige ID für große Contours
-        if area > 10000:
-            cv2.putText(OG, str(stats['id']), (x + 5, y + 20), 
-                       cv2.FONT_HERSHEY_SIMPLEX, 0.6, color, 2)
+        # Nummerierung nur für ROT (sehr große Contours >50k area)
+        if area > 50000:
+            cv2.putText(OG, str(red_contour_number), (x + 5, y + 20), 
+                       cv2.FONT_HERSHEY_SIMPLEX, 0.8, (255, 255, 255), 3)  # Weiße Zahlen für bessere Sichtbarkeit
+            cv2.putText(OG, str(red_contour_number), (x + 5, y + 20), 
+                       cv2.FONT_HERSHEY_SIMPLEX, 0.8, color, 2)  # Rote Zahlen darüber
+            red_contour_number += 1
     
     # Speichere nur 2 wichtige Debug-Bilder mit OpenCV (verlustfrei)
     debug_dir = os.path.join(script_dir, "debug")
