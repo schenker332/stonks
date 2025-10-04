@@ -1,6 +1,10 @@
 """
 OCR Pipeline für Roll Screenshots - Clean Version
-Eine Hauptfunktion + Eine Debug-Funktion
+Eine Hauptfunkti    # SPEZIELLE MASKE: Erstes Datum (weiß-auf-lila) mit invertierter Threshold
+    _, first_date_mask = cv2.threshold(gray, 190, 255, cv2.THRESH_BINARY_INV)
+    
+    # Speichere zum Testen
+    cv2.imwrite(os.path.join(debug_dir, 'first_date_mask.png'), first_date_mask)ine Debug-Funktion
 """
 
 import cv2
@@ -34,7 +38,7 @@ def main_ocr_extract():
     # Preprocessing
     image_RGB = cv2.cvtColor(image_BGR, cv2.COLOR_BGR2RGB)
     gray = cv2.cvtColor(image_BGR, cv2.COLOR_BGR2GRAY)
-    _, thresh = cv2.threshold(gray, 250, 255, cv2.THRESH_BINARY)
+    _, thresh = cv2.threshold(gray, 253, 255, cv2.THRESH_BINARY) 
     contours, _ = cv2.findContours(thresh, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
     
 
@@ -61,9 +65,86 @@ def main_ocr_extract():
     if not os.path.exists(debug_dir):
         os.makedirs(debug_dir)
 
+    # Individuelle Threshold-Masken für alle Text-Typen
+    _, date_mask = cv2.threshold(gray, 190, 255, cv2.THRESH_BINARY)      # Gleich wie thresh
+    _, name_mask = cv2.threshold(gray, 220, 255, cv2.THRESH_BINARY)      # Gleich wie thresh  
+    _, category_mask = cv2.threshold(gray, 190, 255, cv2.THRESH_BINARY)  # Gleich wie thresh
+    _, price_mask = cv2.threshold(gray, 190, 255, cv2.THRESH_BINARY)     # Gleich wie thresh
+    _, tag_mask = cv2.threshold(gray, 200, 255, cv2.THRESH_BINARY)       # Gleich wie thresh
+    _, first_date_mask = cv2.threshold(gray, 190, 255, cv2.THRESH_BINARY_INV)
+    
+
+    
+    # THRESHOLD OVERVIEW: Alle Masken in einem Bild (nur erstes Fünftel)
+    h, w = gray.shape
+    crop_h = h // 5  # Nur das erste Fünftel der Höhe
+    
+    overview = np.ones((crop_h * 3, w * 3), dtype=np.uint8) * 255  # 3x3 Grid, weißer Hintergrund
+    
+    # Helper function für Text mit weißer Umrandung
+    def draw_text_with_outline(img, text, pos, font, scale, color, thickness):
+        x, y = pos
+        # Weiße Umrandung (dicker)
+        cv2.putText(img, text, (x, y), font, scale, 255, thickness + 2)
+        # Schwarzer Text (dünner)
+        cv2.putText(img, text, (x, y), font, scale, color, thickness)
+    
+    # Grid Position 0,0: Original gray (crop)
+    overview[0:crop_h, 0:w] = gray[0:crop_h, :]
+    draw_text_with_outline(overview, 'Original (gray)', (10, 30), cv2.FONT_HERSHEY_SIMPLEX, 1, 0, 2)
+    
+    # Grid Position 0,1: thresh (Contour Detection)
+    overview[0:crop_h, w:w*2] = thresh[0:crop_h, :]
+    draw_text_with_outline(overview, 'thresh (250, BINARY)', (w+10, 30), cv2.FONT_HERSHEY_SIMPLEX, 1, 0, 2)
+    
+    # Grid Position 0,2: date_mask
+    overview[0:crop_h, w*2:w*3] = date_mask[0:crop_h, :]
+    draw_text_with_outline(overview, 'date_mask (250, BINARY)', (w*2+10, 30), cv2.FONT_HERSHEY_SIMPLEX, 1, 0, 2)
+    
+    # Grid Position 1,0: name_mask
+    overview[crop_h:crop_h*2, 0:w] = name_mask[0:crop_h, :]
+    draw_text_with_outline(overview, 'name_mask (250, BINARY)', (10, crop_h+30), cv2.FONT_HERSHEY_SIMPLEX, 1, 0, 2)
+    
+    # Grid Position 1,1: category_mask
+    overview[crop_h:crop_h*2, w:w*2] = category_mask[0:crop_h, :]
+    draw_text_with_outline(overview, 'category_mask (250, BINARY)', (w+10, crop_h+30), cv2.FONT_HERSHEY_SIMPLEX, 1, 0, 2)
+    
+    # Grid Position 1,2: price_mask
+    overview[crop_h:crop_h*2, w*2:w*3] = price_mask[0:crop_h, :]
+    draw_text_with_outline(overview, 'price_mask (250, BINARY)', (w*2+10, crop_h+30), cv2.FONT_HERSHEY_SIMPLEX, 1, 0, 2)
+    
+    # Grid Position 2,0: tag_mask
+    overview[crop_h*2:crop_h*3, 0:w] = tag_mask[0:crop_h, :]
+    draw_text_with_outline(overview, 'tag_mask (250, BINARY)', (10, crop_h*2+30), cv2.FONT_HERSHEY_SIMPLEX, 1, 0, 2)
+    
+    # Grid Position 2,1: first_date_mask
+    overview[crop_h*2:crop_h*3, w:w*2] = first_date_mask[0:crop_h, :]
+    draw_text_with_outline(overview, 'first_date_mask (190, INV)', (w+10, crop_h*2+30), cv2.FONT_HERSHEY_SIMPLEX, 1, 0, 2)
+    
+    # Grid Position 2,2: Leer (weiß)
+    draw_text_with_outline(overview, 'Unused', (w*2+10, crop_h*2+30), cv2.FONT_HERSHEY_SIMPLEX, 1, 0, 2)
+    
+    # Speichere Übersichtsbild
+    cv2.imwrite(os.path.join(debug_dir, 'threshold_overview.png'), overview)
+    
+
+    print(f"🖼️  OVERVIEW: Alle Threshold-Masken in einem Bild!")
+    print(f"   Nur erstes Fünftel ({crop_h}/{h} Pixel Höhe) für Übersicht")
+    print(f"   Gespeichert: debug/threshold_overview.png (3x3 Grid)")
+
     # Boxdrawer für Text-Bereiche (wie im Original text_recog.py)
     black = cv2.cvtColor(thresh.copy(), cv2.COLOR_GRAY2BGR)
     OG = image_RGB.copy()
+
+
+    first_date_length = boxdrawer(start_x=1350, start_y=9, height=26, 
+                                 source=first_date_mask, destination=OG, 
+                                 mode='starting_left', buffer=12, draw=True)
+    
+
+
+
+
 
     # Arrays für Koordinaten (wie im Original)
     widht = []
@@ -84,36 +165,42 @@ def main_ocr_extract():
         x_coord.append(x)
         y_coord.append(y)
 
-        # Draw bounding box (wie im Original)
+        # Draw bounding box 
         cv2.rectangle(black, (x, y), (x + w, y + h), (255, 0, 0), 2)
         cv2.rectangle(OG, (x, y), (x + w, y + h), (255, 0, 0), 2)
 
-        # Date (wie im Original)
+
+        # Date 
         length_date = 0
         if y - io_date > 20 + h:
             length_date = boxdrawer(start_x=x+20, start_y=y-33, height=26, 
-                                  source=gray, destination=OG, mode='starting_left', 
+                                  source=date_mask, destination=OG, mode='starting_left', 
                                   buffer=12, draw=True)
 
-        # Tag check (wie im Original) 
+
+
+        # Tag 
         a = 0
         b = 0
         lenght1 = boxdrawer(start_x=x + 102, start_y=y + 56, height=38, 
                            source=thresh, destination=black, mode='starting_left', 
                            buffer=3, draw=False)
+        
         row_pixel = black[y + 56:y + 56 + 38, x + 102:x + 102 + lenght1]
         black_pixel = np.sum(row_pixel == 0)
+
         if black_pixel > 10000:
-            lenght1 = boxdrawer(start_x=x + 102, start_y=y + 56, height=38, 
-                               source=thresh, destination=black, mode='starting_left', 
-                               buffer=3, draw=True)
             lenght1 = boxdrawer(start_x=x + 102, start_y=y + 56, height=38, 
                                source=thresh, destination=OG, mode='starting_left', 
                                buffer=3, draw=True)
             b = lenght1 + 3
             a = 5
 
-        # Price (wie im Original)
+
+
+
+
+        # Price 
         c = 0
         lenght3 = boxdrawer(start_x=x + 733, start_y=y + 35, height=40, 
                            source=thresh, destination=black, mode='starting_right', 
@@ -124,24 +211,34 @@ def main_ocr_extract():
             c = lenght3 + 3
 
         lenght_price = boxdrawer(start_x=x + 725 - c, start_y=y + 35, height=40, 
-                               source=thresh, destination=OG, mode='starting_right', 
+                               source=price_mask, destination=OG, mode='starting_right', 
                                buffer=12, draw=True)
 
-        # Name (wie im Original)
+
+
+
+
+        # Name 
         lenght_name = boxdrawer(start_x=x + 98, start_y=y + 20 - a, height=35, 
-                              source=thresh, destination=black, mode='starting_left', 
+                              source=name_mask, destination=black, mode='starting_left', 
                               buffer=12, draw=True)
         lenght_name = boxdrawer(start_x=x + 98, start_y=y + 20 - a, height=35, 
-                              source=thresh, destination=OG, mode='starting_left', 
+                              source=name_mask, destination=OG, mode='starting_left', 
                               buffer=12, draw=True)
 
-        # Category (wie im Original)
+
+
+
+        # Category 
         lenght_category = boxdrawer(start_x=x + 98 + b, start_y=y + 59, height=35, 
-                                  source=thresh, destination=black, mode='starting_left', 
+                                  source=category_mask, destination=black, mode='starting_left', 
                                   buffer=12, draw=True)
         lenght_category = boxdrawer(start_x=x + 98 + b, start_y=y + 59, height=35, 
-                                  source=thresh, destination=OG, mode='starting_left', 
+                                  source=category_mask, destination=OG, mode='starting_left', 
                                   buffer=12, draw=True)
+
+
+
 
         # Number auf image (wie im Original)
         font = cv2.FONT_HERSHEY_SIMPLEX

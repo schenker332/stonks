@@ -6,7 +6,7 @@ from stitch_overlap import stitch_scroll_sequence
 
 if __name__ == "__main__":
     # 1. Screenshots aufnehmen UND automatisch croppen 
-    # original_shots, cropped_shots = capture_and_crop_screenshots()
+    original_shots, cropped_shots = capture_and_crop_screenshots()
     
     # 2. Bilder aus Ordner laden
     script_dir = os.path.dirname(os.path.abspath(__file__))
