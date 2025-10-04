@@ -4,9 +4,39 @@ matplotlib.use('Agg')
 import os
 import numpy as np
 import pytesseract
-from boxdrawer import boxdrawer
 
-def main_ocr_extract():
+
+def boxdrawer(start_x, start_y, height, source, destination, mode, buffer, draw):
+    import cv2, numpy as np
+    k = white_rows = 0
+    step = 1 if mode == 'starting_left' else -1
+    
+    # Bildgrenzen ermitteln
+    max_width = source.shape[1]
+    max_height = source.shape[0]
+    
+    get_pixel = lambda x: source[start_y:start_y + height, x]
+    cond = lambda px: np.sum(px < 100) if mode == 'starting_left' else np.sum(px == 0)
+    
+    while white_rows < buffer:
+        # Berechne die aktuelle X-Position
+        current_x = start_x + k if mode == 'starting_left' else start_x - k
+        
+        # Prüfe ob wir noch im Bild sind
+        if current_x < 0 or current_x >= max_width:
+            break
+            
+        px = get_pixel(current_x)
+        if cond(px) > 0: white_rows = 0
+        else: white_rows += 1
+        k += 1
+    if draw:
+        x1 = start_x if mode == 'starting_left' else start_x - k + 4
+        x2 = start_x + k - 4 if mode == 'starting_left' else start_x
+        cv2.rectangle(destination, (x1, start_y), (x2, start_y + height), (0, 0, 255), 1)
+    return k
+
+def ocr_extract():
 
     pytesseract.pytesseract.tesseract_cmd = "/opt/homebrew/bin/tesseract"
     os.environ["TESSDATA_PREFIX"] = "/opt/homebrew/share/tessdata/"
@@ -144,19 +174,8 @@ def main_ocr_extract():
 
         io_date = y
 
-    return {
-        'thresh': thresh,
-        'OG': OG,
-        'items': items,  # OCR-Ergebnisse
-        'debug_dir': os.path.join(os.path.dirname(os.path.abspath(__file__)), "debug"),
-    }
-
-
-def debug_ocr(result):
     # Debug-Bilder speichern
-    debug_dir = result['debug_dir']
-    thresh = result['thresh']
-    OG = result['OG']
+    debug_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)), "debug")
     
     # Convert RGB back to BGR für OpenCV speichern
     OG_BGR = cv2.cvtColor(OG, cv2.COLOR_RGB2BGR)
@@ -165,7 +184,6 @@ def debug_ocr(result):
     cv2.imwrite(os.path.join(debug_dir, 'ocr_result.png'), OG_BGR)
     
     # OCR-Ergebnisse anzeigen (exakt wie in text_recog.py)
-    items = result.get('items', [])
     if items:
         print(f"\n📋 OCR ERGEBNISSE: {len(items)} Transaktionen extrahiert")
         for i, item in enumerate(items, 1):
@@ -173,15 +191,12 @@ def debug_ocr(result):
     
     print(f"\n✅ OCR Pipeline abgeschlossen!")
     print(f"📁 Debug-Bilder gespeichert in: {debug_dir}")
-    
+
+
+
 
 
 
 if __name__ == "__main__":
     print("🚀 Starting Clean OCR Pipeline für Roll Screenshots...")
-    
-    # Hauptfunktion: Alles in einer
-    result = main_ocr_extract()
-    
-    # Debug-Funktion: Alles debuggen
-    debug_ocr(result)
+    result = ocr_extract()

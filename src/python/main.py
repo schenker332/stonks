@@ -3,6 +3,7 @@ import glob
 
 from capture_scroll_hq import capture_and_crop_screenshots
 from stitch_overlap import stitch_scroll_sequence
+from ocr_extract import ocr_extract
 
 if __name__ == "__main__":
     # 1. Screenshots aufnehmen UND automatisch croppen 
@@ -28,5 +29,6 @@ if __name__ == "__main__":
     if result['last_match_score'] is not None:
         print(f"   🎯 Letzte Übereinstimmung: {result['last_match_score']:.3f}")
         
-
+    print("\n🚀 Starte OCR Extraktion...")
+    ocr_extract()
 
