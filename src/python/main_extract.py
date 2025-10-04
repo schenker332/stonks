@@ -12,6 +12,7 @@ import matplotlib
 matplotlib.use('Agg') 
 import os
 import numpy as np
+import pytesseract
 from boxdrawer import boxdrawer
 
 def main_ocr_extract():
@@ -22,6 +23,10 @@ def main_ocr_extract():
     - Boxdrawer für alle Text-Bereiche
     Returns: Saubere Datenstruktur für Debug
     """
+    
+    # Tesseract Setup (exakt wie in text_recog.py)
+    pytesseract.pytesseract.tesseract_cmd = "/opt/homebrew/bin/tesseract"
+    os.environ["TESSDATA_PREFIX"] = "/opt/homebrew/share/tessdata/"
     
     # Pfad zum stitched image
     script_dir = os.path.dirname(os.path.abspath(__file__))
@@ -141,6 +146,12 @@ def main_ocr_extract():
                                  source=first_date_mask, destination=OG, 
                                  mode='starting_left', buffer=12, draw=True)
     
+    # Extrahiere das erste Datum (weiß-auf-lila) für Einträge ohne eigenes Datum
+    first_date = ""
+    if first_date_length > 0:
+        first_date = pytesseract.image_to_string(first_date_mask[9:9 + 26, 1350:1350 + first_date_length], lang="deu", config='--psm 6').strip()
+        print(f"📅 ERSTES DATUM (weiß-auf-lila): '{first_date}' - wird für Einträge ohne Datum verwendet")
+    
 
 
 
@@ -152,7 +163,9 @@ def main_ocr_extract():
     x_coord = []
     y_coord = []
     io_date = 0
+    current_date = first_date  # Beginne mit dem ersten Datum
     i = 0
+    items = []  # Für OCR-Ergebnisse wie in text_recog.py
     text_boxes_data = []
     
     # Loop über transaction_boxes (bereits gefiltert!)
@@ -170,16 +183,25 @@ def main_ocr_extract():
         cv2.rectangle(OG, (x, y), (x + w, y + h), (255, 0, 0), 2)
 
 
-        # Date 
+        # Date (mit OCR wie in text_recog.py)
         length_date = 0
         if y - io_date > 20 + h:
             length_date = boxdrawer(start_x=x+20, start_y=y-33, height=26, 
-                                  source=date_mask, destination=OG, mode='starting_left', 
+                                  source=gray, destination=OG, mode='starting_left', 
                                   buffer=12, draw=True)
+            new_date = pytesseract.image_to_string(gray[y-33:y-33 + 26, x+20:x+20 + length_date], lang="deu", config='--psm 6').strip()
+            if new_date:  # Nur wenn ein neues Datum gefunden wurde
+                current_date = new_date
+                print(f"date: {current_date}")
+            else:
+                print(f"date: verwendet weiterhin '{current_date}'")
+        else:
+            print(f"date: verwendet '{current_date}' (kein neues Datum gefunden)")
 
 
 
-        # Tag 
+        # Tag (mit OCR wie in text_recog.py)
+        tag = ""
         a = 0
         b = 0
         lenght1 = boxdrawer(start_x=x + 102, start_y=y + 56, height=38, 
@@ -191,10 +213,14 @@ def main_ocr_extract():
 
         if black_pixel > 10000:
             lenght1 = boxdrawer(start_x=x + 102, start_y=y + 56, height=38, 
+                               source=thresh, destination=black, mode='starting_left', 
+                               buffer=3, draw=True)
+            lenght1 = boxdrawer(start_x=x + 102, start_y=y + 56, height=38, 
                                source=thresh, destination=OG, mode='starting_left', 
                                buffer=3, draw=True)
             b = lenght1 + 3
             a = 5
+            tag = pytesseract.image_to_string(gray[y + 56:y + 56 + 38, x + 102:x + 102 + lenght1], lang="deu", config='--psm 6')
 
 
 
@@ -210,32 +236,47 @@ def main_ocr_extract():
         if black_pixel1 > 1000:
             c = lenght3 + 3
 
-        lenght_price = boxdrawer(start_x=x + 725 - c, start_y=y + 35, height=40, 
-                               source=price_mask, destination=OG, mode='starting_right', 
-                               buffer=12, draw=True)
+        lenght3 = boxdrawer(start_x=x + 725 - c, start_y=y + 35, height=40, 
+                           source=thresh, destination=OG, mode='starting_right', 
+                           buffer=12, draw=True)
+        
+        # OCR für Preis (exakt wie in text_recog.py)
+        price_config = '--oem 3 --psm 7 -c tessedit_char_whitelist="-−0123456789,. €$" --psm 7'
+        price = pytesseract.image_to_string(gray[y + 35:y + 35 + 40,  x + 725-c- lenght3 :x + 725-c ], lang="deu", config=price_config)
+        
+        # Korrigiere fehlende Kommas (exakt wie in text_recog.py)
+        if "," not in price:
+            price = price[:-5] + "," + price[-5:]
+        
 
 
 
 
 
-        # Name 
-        lenght_name = boxdrawer(start_x=x + 98, start_y=y + 20 - a, height=35, 
-                              source=name_mask, destination=black, mode='starting_left', 
-                              buffer=12, draw=True)
-        lenght_name = boxdrawer(start_x=x + 98, start_y=y + 20 - a, height=35, 
-                              source=name_mask, destination=OG, mode='starting_left', 
-                              buffer=12, draw=True)
+        # Name (mit OCR wie in text_recog.py)
+        lenght2 = boxdrawer(start_x=x + 98, start_y=y + 20 - a, height=35, 
+                           source=thresh, destination=black, mode='starting_left', 
+                           buffer=12, draw=True)
+        lenght2 = boxdrawer(start_x=x + 98, start_y=y + 20 - a, height=35, 
+                           source=thresh, destination=OG, mode='starting_left', 
+                           buffer=12, draw=True)
+        name = pytesseract.image_to_string(gray[y + 20-a:y + 20-a + 35, x + 98:x + 98 + lenght2], lang="deu", config='--psm 6')
 
 
 
 
-        # Category 
-        lenght_category = boxdrawer(start_x=x + 98 + b, start_y=y + 59, height=35, 
-                                  source=category_mask, destination=black, mode='starting_left', 
-                                  buffer=12, draw=True)
-        lenght_category = boxdrawer(start_x=x + 98 + b, start_y=y + 59, height=35, 
-                                  source=category_mask, destination=OG, mode='starting_left', 
-                                  buffer=12, draw=True)
+        # Category (mit OCR wie in text_recog.py)
+        lenght4 = boxdrawer(start_x=x + 98 + b, start_y=y + 59, height=35, 
+                           source=thresh, destination=black, mode='starting_left', 
+                           buffer=12, draw=True)
+        lenght4 = boxdrawer(start_x=x + 98 + b, start_y=y + 59, height=35, 
+                           source=thresh, destination=OG, mode='starting_left', 
+                           buffer=12, draw=True)
+        category = pytesseract.image_to_string(gray[y + 59:y + 59 + 35, x + 98 + b:x + 98 + b + lenght4], lang="deu", config='--psm 6')
+        
+        # OCR-Ergebnisse ausgeben und sammeln (exakt wie in text_recog.py)
+        print(f"item {i}:  {name.strip()} | {category.strip()} | {price.strip()} | {tag.strip()}")
+        items.append({"name": name.strip(), "category": category.strip(), "price": price.strip(), "tag": tag.strip(), "date": current_date})
 
 
 
@@ -260,9 +301,9 @@ def main_ocr_extract():
             'contour_id': i,
             'transaction_box': {'x': x, 'y': y, 'w': w, 'h': h},
             'date_box': {'x': x+20, 'y': y-33, 'w': length_date, 'h': 26},
-            'name_box': {'x': x+98, 'y': y+20-a, 'w': lenght_name, 'h': 35},
-            'category_box': {'x': x+98+b, 'y': y+59, 'w': lenght_category, 'h': 35},
-            'price_box': {'x': x+725-c-lenght_price, 'y': y+35, 'w': lenght_price, 'h': 40},
+            'name_box': {'x': x+98, 'y': y+20-a, 'w': lenght2, 'h': 35},
+            'category_box': {'x': x+98+b, 'y': y+59, 'w': lenght4, 'h': 35},
+            'price_box': {'x': x+725-c-lenght3, 'y': y+35, 'w': lenght3, 'h': 40},
             'tag_box': {'x': x+102, 'y': y+56, 'w': lenght1, 'h': 38, 'black_pixels': black_pixel}
         })
 
@@ -281,6 +322,7 @@ def main_ocr_extract():
         'black': black,
         'OG': OG,
         'text_boxes_data': text_boxes_data,
+        'items': items,  # OCR-Ergebnisse
         'widht': widht,
         'hight': hight,
         'x_coord': x_coord,
@@ -327,28 +369,28 @@ def debug_ocr(result):
         for i, box in enumerate(other_sorted_by_area[-2:], 1):
             print(f"      {i}. Size: {box['w']}x{box['h']}, Pos: ({box['x']}, {box['y']}), Area: {box['area']:.0f}")
 
-    print(f"\n🔍 Boxdrawer Text-Bereich Erkennung...")
-    print(f"📦 {len(text_boxes_data)} Transaktions-Boxen verarbeitet")
+    # print(f"\n🔍 Boxdrawer Text-Bereich Erkennung...")
+    # print(f"📦 {len(text_boxes_data)} Transaktions-Boxen verarbeitet")
     
-    for i, box_data in enumerate(text_boxes_data, 1):
-        tx_box = box_data['transaction_box']
-        date_box = box_data['date_box']
-        name_box = box_data['name_box']
-        category_box = box_data['category_box']
-        price_box = box_data['price_box']
-        tag_box = box_data['tag_box']
+    # for i, box_data in enumerate(text_boxes_data, 1):
+    #     tx_box = box_data['transaction_box']
+    #     date_box = box_data['date_box']
+    #     name_box = box_data['name_box']
+    #     category_box = box_data['category_box']
+    #     price_box = box_data['price_box']
+    #     tag_box = box_data['tag_box']
         
-        print(f"\n📦 Contour {i}: x={tx_box['x']}, y={tx_box['y']}, w={tx_box['w']}, h={tx_box['h']}")
-        print(f"   📅 Date box: x={date_box['x']}, y={date_box['y']}, w={date_box['w']}, h={date_box['h']}")
-        print(f"   📝 Name box: x={name_box['x']}, y={name_box['y']}, w={name_box['w']}, h={name_box['h']}")
-        print(f"   📂 Category box: x={category_box['x']}, y={category_box['y']}, w={category_box['w']}, h={category_box['h']}")
-        print(f"   💰 Price box: x={price_box['x']}, y={price_box['y']}, w={price_box['w']}, h={price_box['h']}")
-        print(f"   🏷️  Tag box: x={tag_box['x']}, y={tag_box['y']}, w={tag_box['w']}, h={tag_box['h']} (black pixels: {tag_box['black_pixels']})")
+    #     print(f"\n📦 Contour {i}: x={tx_box['x']}, y={tx_box['y']}, w={tx_box['w']}, h={tx_box['h']}")
+    #     print(f"   📅 Date box: x={date_box['x']}, y={date_box['y']}, w={date_box['w']}, h={date_box['h']}")
+    #     print(f"   📝 Name box: x={name_box['x']}, y={name_box['y']}, w={name_box['w']}, h={name_box['h']}")
+    #     print(f"   📂 Category box: x={category_box['x']}, y={category_box['y']}, w={category_box['w']}, h={category_box['h']}")
+    #     print(f"   💰 Price box: x={price_box['x']}, y={price_box['y']}, w={price_box['w']}, h={price_box['h']}")
+    #     print(f"   🏷️  Tag box: x={tag_box['x']}, y={tag_box['y']}, w={tag_box['w']}, h={tag_box['h']} (black pixels: {tag_box['black_pixels']})")
         
-        if tag_box['black_pixels'] > 10000:
-            print(f"       ✅ Tag detected!")
-        else:
-            print(f"       ❌ No tag detected")
+    #     if tag_box['black_pixels'] > 10000:
+    #         print(f"       ✅ Tag detected!")
+    #     else:
+    #         print(f"       ❌ No tag detected")
 
     # Debug-Bilder speichern
     debug_dir = result['debug_dir']
@@ -360,6 +402,13 @@ def debug_ocr(result):
     
     cv2.imwrite(os.path.join(debug_dir, 'ocr_threshold.png'), thresh)
     cv2.imwrite(os.path.join(debug_dir, 'ocr_result.png'), OG_BGR)
+    
+    # OCR-Ergebnisse anzeigen (exakt wie in text_recog.py)
+    items = result.get('items', [])
+    if items:
+        print(f"\n📋 OCR ERGEBNISSE: {len(items)} Transaktionen extrahiert")
+        for i, item in enumerate(items, 1):
+            print(f"{i:2d}. {item['date']:12s} | {item['name']:25s} | {item['category']:15s} | {item['price']:10s} | {item['tag']:10s}")
     
     print(f"\n✅ OCR Pipeline abgeschlossen!")
     print(f"📊 {len(text_boxes_data)} Transaktions-Boxen verarbeitet")
