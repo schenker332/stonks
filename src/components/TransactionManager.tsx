@@ -2,7 +2,6 @@
 'use client';
 
 import { useState, useEffect, FormEvent } from 'react';
-import { CsvImporter } from './CsvImporter';
 
 type Transaction = {
   id: number;
@@ -68,7 +67,6 @@ const reload = () => {
 
   return (
     <div className="p-4 bg-white shadow rounded-lg">
-        <CsvImporter onImported={reload} />
       <form onSubmit={handleAdd} className="mb-6 grid grid-cols-4 gap-4">
         <input
           type="date"
