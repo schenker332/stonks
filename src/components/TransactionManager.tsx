@@ -37,7 +37,7 @@ export function TransactionManager() {
   };
 
   return (
-    <div className="p-4 bg-white shadow rounded-lg">
+    <div className="p-4 shadow rounded-lg" style={{ background: '#90A8C3' }}>
       <OcrSection onOcrComplete={loadTransactions} />
       <TransactionForm onTransactionAdded={addTransaction} />
       <TransactionTable 

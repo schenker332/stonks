@@ -49,7 +49,7 @@ export function OcrSection({ onOcrComplete }: OcrSectionProps) {
   };
 
   return (
-    <div className="mb-6 p-4 bg-gradient-to-r from-blue-50 to-purple-50 rounded-lg border border-blue-200">
+  <div className="mb-6 p-4 rounded-lg shadow" style={{ background: '#D89986' }}>
       <h2 className="text-lg font-semibold mb-3 text-gray-800">📷 OCR Transaktions-Import</h2>
       
       <button

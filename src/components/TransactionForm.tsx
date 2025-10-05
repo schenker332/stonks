@@ -44,7 +44,7 @@ export function TransactionForm({ onTransactionAdded }: TransactionFormProps) {
   };
 
   return (
-    <div>
+    <div className="rounded-lg shadow p-4" style={{ background: '#D89986' }}>
       <h2 className="text-lg font-semibold mb-3 text-gray-800">➕ Manuell hinzufügen</h2>
       <form onSubmit={handleAdd} className="mb-6 grid grid-cols-4 gap-4">
         <input

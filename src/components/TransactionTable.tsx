@@ -31,13 +31,14 @@ export function TransactionTable({ transactions, onTransactionDeleted }: Transac
   };
 
   return (
-    <div className="overflow-x-auto">
-      <table className="min-w-full divide-y divide-gray-200">
-        <thead className="bg-gray-50">
-          <tr>
-            <th className="px-4 py-2 text-left text-sm text-gray-500">Datum</th>
-            <th className="px-4 py-2 text-left text-sm text-gray-500">Beschreibung</th>
-            <th className="px-4 py-2 text-right text-sm text-gray-500">Betrag</th>
+    <div className="mt-6 mb-6 p-4 rounded-lg shadow" style={{ background: '#D89986' }}>
+      <div className="overflow-x-auto">
+        <table className="min-w-full divide-y divide-gray-200">
+          <thead>
+            <tr className="bg-white rounded-t-lg">
+              <th className="px-4 py-2 text-left text-sm text-gray-500 rounded-tl-lg">Datum</th>
+              <th className="px-4 py-2 text-left text-sm text-gray-500">Beschreibung</th>
+              <th className="px-4 py-2 text-right text-sm text-gray-500 rounded-tr-lg">Betrag</th>
             <th className="px-4 py-2" />
           </tr>
         </thead>
@@ -70,5 +71,6 @@ export function TransactionTable({ transactions, onTransactionDeleted }: Transac
         </tbody>
       </table>
     </div>
+  </div>
   );
 }
