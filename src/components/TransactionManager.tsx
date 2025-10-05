@@ -9,6 +9,10 @@ import { TransactionTable } from './TransactionTable';
 type Transaction = {
   id: number;
   date: string;
+  name: string;
+  category: string;
+  price: number;
+  tag: string;
   description: string;
   amount: number;
   type: 'income' | 'expense';

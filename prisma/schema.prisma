@@ -19,6 +19,10 @@ datasource db {
 model Transaction {
   id          Int      @id @default(autoincrement())
   date        DateTime
+  name        String   @default("")
+  category    String   @default("")
+  price       Float    @default(0)
+  tag         String   @default("")
   description String
   amount      Float
   type        TransactionType

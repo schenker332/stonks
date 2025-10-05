@@ -4,6 +4,10 @@
 interface Transaction {
   id: number;
   date: string;
+  name: string;
+  category: string;
+  price: number;
+  tag: string;
   description: string;
   amount: number;
   type: 'income' | 'expense';
@@ -37,9 +41,11 @@ export function TransactionTable({ transactions, onTransactionDeleted }: Transac
           <thead>
             <tr className="bg-white rounded-t-lg">
               <th className="px-4 py-2 text-left text-sm text-gray-500 rounded-tl-lg">Datum</th>
-              <th className="px-4 py-2 text-left text-sm text-gray-500">Beschreibung</th>
-              <th className="px-4 py-2 text-right text-sm text-gray-500 rounded-tr-lg">Betrag</th>
-            <th className="px-4 py-2" />
+              <th className="px-4 py-2 text-left text-sm text-gray-500">Name</th>
+              <th className="px-4 py-2 text-left text-sm text-gray-500">Kategorie</th>
+              <th className="px-4 py-2 text-right text-sm text-gray-500">Preis</th>
+              <th className="px-4 py-2 text-left text-sm text-gray-500">Tag</th>
+              <th className="px-4 py-2 rounded-tr-lg" />
           </tr>
         </thead>
         <tbody className="divide-y divide-gray-100">
@@ -49,14 +55,20 @@ export function TransactionTable({ transactions, onTransactionDeleted }: Transac
                 {new Date(tx.date).toLocaleDateString('de-DE')}
               </td>
               <td className="px-4 py-2 text-sm text-gray-700">
-                {tx.description}
+                {tx.name}
+              </td>
+              <td className="px-4 py-2 text-sm text-gray-700">
+                {tx.category}
               </td>
               <td
-                className={`px-4 py-2 text-sm font-semibold ${
+                className={`px-4 py-2 text-sm font-semibold text-right ${
                   tx.type === 'income' ? 'text-green-600' : 'text-red-600'
                 }`}
               >
-                {tx.type === 'expense' ? '- ' : '+ '}€{tx.amount.toFixed(2)}
+                {tx.type === 'expense' ? '- ' : '+ '}€{tx.price.toFixed(2)}
+              </td>
+              <td className="px-4 py-2 text-sm text-gray-700">
+                {tx.tag}
               </td>
               <td className="px-4 py-2 text-sm">
                 <button

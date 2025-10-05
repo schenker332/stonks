@@ -141,24 +141,28 @@ export async function POST(request: NextRequest) {
                   const parsedDate = parseGermanDate(item.date);
                   
                   // Preis parsen
-                  let amount = 0;
+                  let price = 0;
                   if (item.price) {
                     const priceStr = item.price.replace(/[^\d,-]/g, '').replace(',', '.');
-                    amount = parseFloat(priceStr) || 0;
+                    price = parseFloat(priceStr) || 0;
                     // Negative Werte für Ausgaben (falls nicht schon negativ)
-                    if (amount > 0) amount = -amount;
+                    if (price > 0) price = -price;
                   }
                   
                   await prisma.transaction.create({
                     data: {
                       date: parsedDate,
+                      name: item.name || 'Unbekannt',
+                      category: item.category || '',
+                      price: price,
+                      tag: item.tag || '',
                       description: item.name || 'Unbekannt',
-                      amount: amount,
+                      amount: price,
                       type: 'expense', // Default zu expense, da es Bank-Transaktionen sind
                     }
                   });
                   savedCount++;
-                  console.log(`✅ Gespeichert: ${item.name} - ${item.date} -> ${parsedDate.toISOString().split('T')[0]} - ${amount}€`);
+                  console.log(`✅ Gespeichert: ${item.name} (${item.category}) - ${item.date} -> ${parsedDate.toISOString().split('T')[0]} - ${price}€ [${item.tag}]`);
                 } catch (dbError) {
                   console.error('❌ DB Error für Item:', item, dbError);
                   errors.push(`Fehler bei: ${item.name} - ${dbError}`);
@@ -249,13 +253,4 @@ export async function POST(request: NextRequest) {
       execution_time: `${((Date.now() - startTime) / 1000).toFixed(1)}s`
     }, { status: 500 });
   }
-}
-
-export async function GET() {
-  return NextResponse.json({
-    message: 'OCR API ist bereit',
-    endpoints: {
-      process: 'POST /api/ocr/process - Startet OCR-Verarbeitung'
-    }
-  });
 }

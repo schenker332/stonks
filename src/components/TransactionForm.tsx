@@ -5,6 +5,10 @@ import { useState, FormEvent } from 'react';
 interface Transaction {
   id: number;
   date: string;
+  name: string;
+  category: string;
+  price: number;
+  tag: string;
   description: string;
   amount: number;
   type: 'income' | 'expense';
@@ -17,8 +21,10 @@ interface TransactionFormProps {
 export function TransactionForm({ onTransactionAdded }: TransactionFormProps) {
   const [form, setForm] = useState({
     date: '',
-    description: '',
-    amount: '',
+    name: '',
+    category: '',
+    price: '',
+    tag: '',
     type: 'expense',
   });
 
@@ -30,8 +36,10 @@ export function TransactionForm({ onTransactionAdded }: TransactionFormProps) {
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
         date: form.date,
-        description: form.description,
-        amount: parseFloat(form.amount),
+        name: form.name,
+        category: form.category,
+        price: parseFloat(form.price),
+        tag: form.tag,
         type: form.type,
       }),
     });
@@ -40,13 +48,13 @@ export function TransactionForm({ onTransactionAdded }: TransactionFormProps) {
     
     const newTx: Transaction = await resp.json();
     onTransactionAdded(newTx); // Sagt der Haupt-Komponente: "Neue Transaktion hinzufügen!"
-    setForm({ date: '', description: '', amount: '', type: 'expense' }); // Formular leeren
+    setForm({ date: '', name: '', category: '', price: '', tag: '', type: 'expense' }); // Formular leeren
   };
 
   return (
     <div className="rounded-lg shadow p-4" style={{ background: '#D89986' }}>
       <h2 className="text-lg font-semibold mb-3 text-gray-800">➕ Manuell hinzufügen</h2>
-      <form onSubmit={handleAdd} className="mb-6 grid grid-cols-4 gap-4">
+      <form onSubmit={handleAdd} className="mb-6 grid grid-cols-6 gap-3">
         <input
           type="date"
           required
@@ -56,19 +64,34 @@ export function TransactionForm({ onTransactionAdded }: TransactionFormProps) {
         />
         <input
           type="text"
-          placeholder="Beschreibung"
+          placeholder="Name"
           required
-          value={form.description}
-          onChange={e => setForm(f => ({ ...f, description: e.target.value }))}
+          value={form.name}
+          onChange={e => setForm(f => ({ ...f, name: e.target.value }))}
+          className="border border-gray-300 p-2 rounded bg-white text-gray-900 placeholder-gray-500 focus:border-blue-500 focus:outline-none"
+        />
+        <input
+          type="text"
+          placeholder="Kategorie"
+          required
+          value={form.category}
+          onChange={e => setForm(f => ({ ...f, category: e.target.value }))}
           className="border border-gray-300 p-2 rounded bg-white text-gray-900 placeholder-gray-500 focus:border-blue-500 focus:outline-none"
         />
         <input
           type="number"
-          placeholder="Betrag"
+          placeholder="Preis"
           step="0.01"
           required
-          value={form.amount}
-          onChange={e => setForm(f => ({ ...f, amount: e.target.value }))}
+          value={form.price}
+          onChange={e => setForm(f => ({ ...f, price: e.target.value }))}
+          className="border border-gray-300 p-2 rounded bg-white text-gray-900 placeholder-gray-500 focus:border-blue-500 focus:outline-none"
+        />
+        <input
+          type="text"
+          placeholder="Tag"
+          value={form.tag}
+          onChange={e => setForm(f => ({ ...f, tag: e.target.value }))}
           className="border border-gray-300 p-2 rounded bg-white text-gray-900 placeholder-gray-500 focus:border-blue-500 focus:outline-none"
         />
         <div className="flex space-x-2">
@@ -84,7 +107,7 @@ export function TransactionForm({ onTransactionAdded }: TransactionFormProps) {
             type="submit"
             className="bg-blue-600 hover:bg-blue-700 text-white px-4 rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
           >
-            Hinzufügen
+            +
           </button>
         </div>
       </form>

@@ -19,24 +19,35 @@ export async function GET() {
 export async function POST(request: Request) {
   try {
     const body = await request.json();
-    const { date, description, amount, type } = body;
+    const { date, name, category, price, tag, description, amount, type } = body;
 
-    // Validierung
-    if (!date || !description || amount === undefined || !type) {
-      return new NextResponse('Fehlende oder ungültige Daten', { status: 400 });
+    // Validierung - neue Felder bevorzugen, alte als Fallback
+    const finalDate = date;
+    const finalName = name || description || '';
+    const finalCategory = category || '';
+    const finalPrice = price !== undefined ? price : (amount !== undefined ? amount : 0);
+    const finalTag = tag || '';
+    const finalType = type || 'expense';
+
+    if (!finalDate || !finalName) {
+      return new NextResponse('Fehlende oder ungültige Daten (date, name benötigt)', { status: 400 });
     }
 
-    if (type !== 'income' && type !== 'expense') {
+    if (finalType !== 'income' && finalType !== 'expense') {
       return new NextResponse('Type muss "income" oder "expense" sein', { status: 400 });
     }
 
-    // Neue Transaktion erstellen
+    // Neue Transaktion erstellen mit allen Feldern
     const transaction = await prisma.transaction.create({
       data: {
-        date: new Date(date),
-        description,
-        amount: parseFloat(amount),
-        type,
+        date: new Date(finalDate),
+        name: finalName,
+        category: finalCategory,
+        price: parseFloat(finalPrice.toString()),
+        tag: finalTag,
+        description: description || finalName,
+        amount: parseFloat(finalPrice.toString()),
+        type: finalType,
       },
     });
 

@@ -1,0 +1,5 @@
+-- AlterTable
+ALTER TABLE "public"."Transaction" ADD COLUMN     "category" TEXT NOT NULL DEFAULT '',
+ADD COLUMN     "name" TEXT NOT NULL DEFAULT '',
+ADD COLUMN     "price" DOUBLE PRECISION NOT NULL DEFAULT 0,
+ADD COLUMN     "tag" TEXT NOT NULL DEFAULT '';
