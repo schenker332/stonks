@@ -4,6 +4,9 @@ import subprocess
 import pyautogui
 import shutil
 import cv2
+import json
+import sys
+import traceback
 from PIL import Image, ImageChops
 import numpy as np
 from Quartz import (
@@ -15,6 +18,29 @@ from Quartz import (
     CGEventPost,
     kCGHIDEventTap
 )
+
+
+# === LOGGING HELPER ===
+def log(level: str, message: str, **data):
+    """Strukturiertes Logging für SSE Stream."""
+    payload = {"level": level, "message": message}
+    if data:
+        payload["data"] = data
+    print("LOG:", json.dumps(payload, ensure_ascii=False))
+    sys.stdout.flush()
+
+def log_exc(err: Exception, context: str = None):
+    """Loggt Exception mit Stacktrace."""
+    tb = traceback.format_exception(type(err), err, err.__traceback__)
+    payload = {
+        "level": "error",
+        "message": str(err),
+        "trace": "".join(tb)
+    }
+    if context:
+        payload["context"] = context
+    print("LOG:", json.dumps(payload, ensure_ascii=False))
+    sys.stdout.flush()
 
 
 # === KONFIGURATION ===
@@ -68,8 +94,18 @@ def find_finanzguru_window():
     for win in infos:
         if win.get("kCGWindowOwnerName") == "Finanzguru":
             b = win["kCGWindowBounds"]
+            log("info", "✅ Finanzguru-Fenster gefunden", x=int(b["X"]), y=int(b["Y"]), width=int(b["Width"]), height=int(b["Height"]))
             return int(b["X"]), int(b["Y"]), int(b["Width"]), int(b["Height"])
-    raise RuntimeError("Finanzguru-Fenster nicht gefunden")
+    
+    error = RuntimeError("Finanzguru-Fenster nicht gefunden")
+    log_exc(error, context="find_finanzguru_window")
+    raise error
+
+
+def penis():
+    error = RuntimeError("Finanzguru-Fenster nicht gefunden")
+    log_exc(error, context="find_finanzguru_window")
+    raise error
 
 
 def capture_region_hq(x, y, w, h, out_path):
@@ -93,7 +129,7 @@ def scroll_down(x, y, w, h):
     CGEventPost(kCGHIDEventTap, ev)
 
 
-def has_changed(img1_path, img2_path, compare_height=200, threshold=5):
+def has_changed(img1_path, img2_path, compare_height=200, threshold=20000):
     """Vergleicht die unteren compare_height Pixel von zwei Screenshots."""
     img1 = Image.open(img1_path)
     img2 = Image.open(img2_path)
@@ -109,7 +145,7 @@ def has_changed(img1_path, img2_path, compare_height=200, threshold=5):
 
     # Anzahl unterschiedlicher Pixel
     changed_pixels = np.count_nonzero(diff_array)
-    print(f"🔎 Vergleich: {changed_pixels} veränderte Pixel")
+    log("info", "🔎 Vergleich: veränderte Pixel", changed_pixels=int(changed_pixels), threshold=threshold)
 
     return changed_pixels > threshold
 
@@ -117,17 +153,12 @@ def has_changed(img1_path, img2_path, compare_height=200, threshold=5):
 def _crop_all_images(image_paths, output_dir):
     """Croppt alle Bilder - schneidet nur unten ab, Rest bleibt original."""
     
-    print(f"🔪 Schneide {len(image_paths)} Bilder zu...")
-    print(f"   Schneide nur {CROP_BOTTOM_OFFSET} Pixel unten ab, Rest bleibt original")
     
     cropped_paths = []
     
     for i, img_path in enumerate(image_paths):
         # Bild laden
         img = cv2.imread(img_path)
-        if img is None:
-            print(f"❌ Konnte {img_path} nicht laden")
-            continue
             
         # Nur unten abschneiden, alles andere behalten
         original_height = img.shape[0]
@@ -140,9 +171,9 @@ def _crop_all_images(image_paths, output_dir):
         cv2.imwrite(output_path, cropped)
         cropped_paths.append(output_path)
         
-        print(f"   ✂️  {os.path.basename(img_path)} -> {filename} (Original: {original_height}px, Neu: {new_bottom}px)")
+        log("info", "✂️ Bild zugeschnitten", filename=filename, original_height=original_height, new_height=new_bottom)
     
-    print(f"📁 {len(cropped_paths)} beschnittene Bilder gespeichert in: shots_cropped/")
+    log("info", "📁 Cropping abgeschlossen", total_cropped=len(cropped_paths))
     return cropped_paths
 
 
@@ -153,6 +184,10 @@ def capture_and_crop_screenshots():
     Returns:
         tuple: (original_shots, cropped_shots) - Listen mit Dateipfaden
     """
+
+    log("info", "🚀 Starte Capture & Crop Pipeline")
+
+
     # shots_dir im selben Ordner wie das Python-Script
     script_dir = os.path.dirname(os.path.abspath(__file__))
     shots_dir = os.path.join(script_dir, "shots")
@@ -161,24 +196,16 @@ def capture_and_crop_screenshots():
     # Beide Ordner komplett leeren falls vorhanden
     for directory, name in [(shots_dir, "Screenshots"), (cropped_dir, "beschnittene Bilder")]:
         if os.path.exists(directory):
-            print(f"🧹 Lösche alte {name}...")
+            log("info", f"🧹 Lösche alte {name}")
             shutil.rmtree(directory)
-    
+
     # Neue Ordner erstellen
     os.makedirs(shots_dir, exist_ok=True)
     os.makedirs(cropped_dir, exist_ok=True)
-    print("📁 Ordner bereit für neue Screenshots")
-
     # Browser verstecken und Finanzguru aktivieren
-    print("🪟 Verstecke Browser und aktiviere Finanzguru...")
     hide_browser_show_finanzguru()
-    time.sleep(1)  # Kurz warten bis Fenster gewechselt haben
-
+    time.sleep(0.3)  # Kurz warten bis Fenster gewechselt haben
     x, y, w, h = find_finanzguru_window()
-
-    # Fenster aktivieren
-    click_x, click_y = x + 10, y + h // 2
-    pyautogui.click(click_x, click_y)
     time.sleep(0.5)
 
     shots = []
@@ -187,16 +214,15 @@ def capture_and_crop_screenshots():
     for i in range(MAX_FRAMES):
         path = os.path.join(shots_dir, f"shot_{i:03d}.png")
         capture_region_hq(x, y, w, h, path)
+        log("info", "📸 Screenshot aufgenommen", index=i, filename=f"shot_{i:03d}.png")
 
         if prev_path:
             if not has_changed(prev_path, path):
-                print("⏹️  Kein neuer Inhalt mehr → Aufnahme beendet.")
-                # Letzten doppelten Screenshot löschen
+                log("info", "⏹️ Kein neuer Inhalt mehr → Aufnahme beendet. Doppelter Screenshot entfernt", filename=os.path.basename(path))
                 os.remove(path)
-                print(f"🗑️  Doppelten Screenshot entfernt: {os.path.basename(path)}")
                 break
             else:
-                print("✅ Neuer Inhalt erkannt, weiter scrollen...")
+                log("info", "✅ Neuer Inhalt erkannt, weiter scrollen")
         
         # Screenshot nur zur Liste hinzufügen wenn er verwendet wird
         shots.append(path)
@@ -205,16 +231,15 @@ def capture_and_crop_screenshots():
         time.sleep(DELAY)
         prev_path = path
 
-    print(f"📸 {len(shots)} Screenshots erstellt")
-    
+    log("info", "📸 Screenshot-Aufnahme abgeschlossen", total_shots=len(shots))
+    # Browser wiederherstellen
+    restore_browser()
     # Automatisches Cropping
     cropped_shots = _crop_all_images(shots, cropped_dir)
-    
-    # Browser wiederherstellen
-    print("🔄 Stelle Browser wieder her...")
-    restore_browser()
-    
+    log("info", "✅ Capture & Crop erfolgreich abgeschlossen", original_shots=len(shots), cropped_shots=len(cropped_shots))
     return shots, cropped_shots
+
+
 
 
 
