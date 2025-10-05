@@ -30,5 +30,24 @@ if __name__ == "__main__":
         print(f"   🎯 Letzte Übereinstimmung: {result['last_match_score']:.3f}")
         
     print("\n🚀 Starte OCR Extraktion...")
-    ocr_extract()
+    ocr_result = ocr_extract()
+    
+    # JSON Output für API
+    import json
+    api_response = {
+        "items": ocr_result.get("items", []),
+        "first_date": ocr_result.get("first_date", None),
+        "total_found": len(ocr_result.get("items", [])),
+        "stitching_info": {
+            "frames_used": result['frames_used'],
+            "last_match_score": result['last_match_score'],
+            "output_path": result['output_path']
+        }
+    }
+    
+    print("\n" + "="*50)
+    print("API_JSON_START")
+    print(json.dumps(api_response, ensure_ascii=False, indent=2))
+    print("API_JSON_END")
+    print("="*50)
 

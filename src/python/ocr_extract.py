@@ -191,6 +191,8 @@ def ocr_extract():
     
     print(f"\n✅ OCR Pipeline abgeschlossen!")
     print(f"📁 Debug-Bilder gespeichert in: {debug_dir}")
+    
+    return {"items": items, "first_date": first_date}
 
 
 

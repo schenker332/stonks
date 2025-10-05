@@ -1,7 +1,10 @@
 // src/components/TransactionManager.tsx
 'use client';
 
-import { useState, useEffect, FormEvent } from 'react';
+import { useState, useEffect } from 'react';
+import { OcrSection } from './OcrSection';
+import { TransactionForm } from './TransactionForm';
+import { TransactionTable } from './TransactionTable';
 
 type Transaction = {
   id: number;
@@ -13,142 +16,34 @@ type Transaction = {
 
 export function TransactionManager() {
   const [transactions, setTransactions] = useState<Transaction[]>([]);
-  const [form, setForm] = useState({
-    date: '',
-    description: '',
-    amount: '',
-    type: 'expense',
-  });
 
-  // Beim Laden: GET
+  // Transaktionen beim Start laden
   useEffect(() => {
+    loadTransactions();
+  }, []);
+
+  const loadTransactions = () => {
     fetch('/api/transactions')
       .then(res => res.json())
       .then(setTransactions);
-  }, []);
+  };
 
-  // POST: neue Transaktion
-  async function handleAdd(e: FormEvent) {
-    e.preventDefault();
-    const resp = await fetch('/api/transactions', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        date: form.date,
-        description: form.description,
-        amount: parseFloat(form.amount),
-        type: form.type,
-      }),
-    });
-    if (!resp.ok) return alert('Fehler beim Anlegen');
-    const newTx: Transaction = await resp.json();
+  const addTransaction = (newTx: Transaction) => {
     setTransactions([newTx, ...transactions]);
-    setForm({ date: '', description: '', amount: '', type: 'expense' });
-  }
+  };
 
-  // DELETE: Transaktion löschen
-  async function handleDelete(id: number) {
-    if (!confirm('Wirklich löschen?')) return;
-    const resp = await fetch(`/api/transactions/${id}`, {
-      method: 'DELETE',
-    });
-    if (resp.ok) {
-      setTransactions(transactions.filter(tx => tx.id !== id));
-    } else {
-      alert('Löschen fehlgeschlagen');
-    }
-  }
-
-const reload = () => {
-  fetch('/api/transactions')
-    .then((r: Response) => r.json())
-    .then(setTransactions);
-};
+  const removeTransaction = (id: number) => {
+    setTransactions(transactions.filter(tx => tx.id !== id));
+  };
 
   return (
     <div className="p-4 bg-white shadow rounded-lg">
-      <form onSubmit={handleAdd} className="mb-6 grid grid-cols-4 gap-4">
-        <input
-          type="date"
-          required
-          value={form.date}
-          onChange={e => setForm(f => ({ ...f, date: e.target.value }))}
-          className="border border-gray-300 p-2 rounded bg-white text-gray-900 focus:border-blue-500 focus:outline-none"
-        />
-        <input
-          type="text"
-          placeholder="Beschreibung"
-          required
-          value={form.description}
-          onChange={e => setForm(f => ({ ...f, description: e.target.value }))}
-          className="border border-gray-300 p-2 rounded bg-white text-gray-900 placeholder-gray-500 focus:border-blue-500 focus:outline-none"
-        />
-        <input
-          type="number"
-          placeholder="Betrag"
-          step="0.01"
-          required
-          value={form.amount}
-          onChange={e => setForm(f => ({ ...f, amount: e.target.value }))}
-          className="border border-gray-300 p-2 rounded bg-white text-gray-900 placeholder-gray-500 focus:border-blue-500 focus:outline-none"
-        />
-        <div className="flex space-x-2">
-          <select
-            value={form.type}
-            onChange={e => setForm(f => ({ ...f, type: e.target.value }))}
-            className="border border-gray-300 p-2 rounded flex-1 bg-white text-gray-900 focus:border-blue-500 focus:outline-none"
-          >
-            <option value="expense">Ausgabe</option>
-            <option value="income">Einnahme</option>
-          </select>
-          <button
-            type="submit"
-            className="bg-blue-600 hover:bg-blue-700 text-white px-4 rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
-          >
-            Hinzufügen
-          </button>
-        </div>
-      </form>
-
-      <div className="overflow-x-auto">
-        <table className="min-w-full divide-y divide-gray-200">
-          <thead className="bg-gray-50">
-            <tr>
-              <th className="px-4 py-2 text-left text-sm text-gray-500">Datum</th>
-              <th className="px-4 py-2 text-left text-sm text-gray-500">Beschreibung</th>
-              <th className="px-4 py-2 text-right text-sm text-gray-500">Betrag</th>
-              <th className="px-4 py-2" />
-            </tr>
-          </thead>
-          <tbody className="divide-y divide-gray-100">
-            {transactions.map(tx => (
-              <tr key={tx.id}>
-                <td className="px-4 py-2 text-sm text-gray-700">
-                  {new Date(tx.date).toLocaleDateString('de-DE')}
-                </td>
-                <td className="px-4 py-2 text-sm text-gray-700">
-                  {tx.description}
-                </td>
-                <td
-                  className={`px-4 py-2 text-sm font-semibold ${
-                    tx.type === 'income' ? 'text-green-600' : 'text-red-600'
-                  }`}
-                >
-                  {tx.type === 'expense' ? '- ' : '+ '}€{tx.amount.toFixed(2)}
-                </td>
-                <td className="px-4 py-2 text-sm">
-                  <button
-                    onClick={() => handleDelete(tx.id)}
-                    className="text-red-500 hover:underline"
-                  >
-                    Löschen
-                  </button>
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      </div>
+      <OcrSection onOcrComplete={loadTransactions} />
+      <TransactionForm onTransactionAdded={addTransaction} />
+      <TransactionTable 
+        transactions={transactions} 
+        onTransactionDeleted={removeTransaction} 
+      />
     </div>
   );
 }

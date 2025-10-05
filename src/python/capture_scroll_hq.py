@@ -27,6 +27,41 @@ DELAY = 0.7
 SCROLL_AMOUNT = 700
 
 
+def hide_browser_show_finanzguru():
+    """Versteckt Browser-Fenster und bringt Finanzguru in den Vordergrund."""
+    applescript = '''
+    tell application "System Events"
+        try
+            tell application "Arc" to set miniaturized of front window to true
+        on error
+            -- Browser nicht gefunden, ignorieren
+        end try
+        
+        try
+            tell application "Finanzguru" to activate
+        on error
+            -- Finanzguru läuft nicht, ignorieren
+        end try
+    end tell
+    '''
+    subprocess.run(["osascript", "-e", applescript])
+
+
+def restore_browser():
+    """Stellt Browser-Fenster wieder her."""
+    applescript = '''
+    tell application "Arc"
+        try
+            activate
+            set miniaturized of front window to false
+        on error
+            -- Fehler ignorieren
+        end try
+    end tell
+    '''
+    subprocess.run(["osascript", "-e", applescript])
+
+
 def find_finanzguru_window():
     """Findet das Finanzguru-Fenster und gibt (x, y, width, height) zurück."""
     infos = CGWindowListCopyWindowInfo(kCGWindowListOptionOnScreenOnly, kCGNullWindowID)
@@ -134,6 +169,11 @@ def capture_and_crop_screenshots():
     os.makedirs(cropped_dir, exist_ok=True)
     print("📁 Ordner bereit für neue Screenshots")
 
+    # Browser verstecken und Finanzguru aktivieren
+    print("🪟 Verstecke Browser und aktiviere Finanzguru...")
+    hide_browser_show_finanzguru()
+    time.sleep(1)  # Kurz warten bis Fenster gewechselt haben
+
     x, y, w, h = find_finanzguru_window()
 
     # Fenster aktivieren
@@ -169,6 +209,10 @@ def capture_and_crop_screenshots():
     
     # Automatisches Cropping
     cropped_shots = _crop_all_images(shots, cropped_dir)
+    
+    # Browser wiederherstellen
+    print("🔄 Stelle Browser wieder her...")
+    restore_browser()
     
     return shots, cropped_shots
 
