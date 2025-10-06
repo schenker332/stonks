@@ -12,14 +12,8 @@ export function OcrSection({ onOcrComplete }: OcrSectionProps) {
   const [ocrError, setOcrError] = useState('');
 
   const handleOcr = async () => {
-    // 1. Python-Script im Hintergrund starten (API-Call)
-    fetch('/api/ocr/process', { 
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' }
-    }).catch(err => console.error('API-Call Fehler:', err));
-    
-    // 2. Sofort zur Debug-Seite weiterleiten (ohne auf Response zu warten)
-    window.location.href = '/debug';
+    // Direkt zu /process weiterleiten - dort wird die API aufgerufen
+    window.location.href = '/process';
   };
 
   return (
@@ -39,12 +33,7 @@ export function OcrSection({ onOcrComplete }: OcrSectionProps) {
           {ocrLoading ? '🔄 Verarbeitung läuft...' : '🚀 OCR starten'}
         </button>
         
-        <button
-          onClick={() => window.location.href = '/debug'}
-          className="px-6 py-3 rounded-lg font-medium bg-gray-600 hover:bg-gray-700 text-white shadow-md hover:shadow-lg transition-all"
-        >
-          🔍 Debug-Monitor
-        </button>
+       
       </div>
       
       {/* Status Messages */}

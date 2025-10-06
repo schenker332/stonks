@@ -1,4 +1,4 @@
-// src/app/api/ocr/process/route.ts
+// src/app/api/process/route.ts
 import { NextRequest, NextResponse } from 'next/server';
 import { spawn } from 'child_process';
 import path from 'path';

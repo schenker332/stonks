@@ -9,7 +9,8 @@ script_path = os.path.dirname(os.path.abspath(__file__))
 shots_path = os.path.join(script_path, "shots")
 cropped_path = os.path.join(script_path, "shots_cropped")
 
-debug_path = os.path.join(script_path, "debug", "stitch")
+debug_stitch_path = os.path.join(script_path, "debug", "stitch")
+debug_ocr_path = os.path.join(script_path, "debug")
 
 stitched_path = os.path.join(script_path, "stitched.png")
     
@@ -28,13 +29,17 @@ def run_pipeline():
     capture_and_crop_screenshots(shots_path, cropped_path)
 
     # 4. Gecroppte Bilder zu einem langen Bild zusammenfügen (speichert in stitched_path)
-    #   Die Debug-Bilder werden im debug_path gespeichert 
-    stitch_scroll_sequence(cropped_path, stitched_path, debug_path)
+    #   Die Debug-Bilder werden im debug_stitch_path gespeichert 
+    stitch_scroll_sequence(cropped_path, stitched_path, debug_stitch_path)
 
     # 5. OCR auf dem langen Bild ausführen und Ergebnis zurückgeben
-    ocr_result = ocr_extract(stitched_path, debug_path)
+    #   Die Debug-Bilder werden im debug_ocr_path gespeichert
+    ocr_result = ocr_extract(stitched_path, debug_ocr_path)
     return ocr_result
 
 
 if __name__ == "__main__":
     run_pipeline()
+
+
+        

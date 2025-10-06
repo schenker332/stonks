@@ -202,7 +202,6 @@ def ocr_extract(stitched_path, debug_path):
     # Convert RGB back to BGR für OpenCV speichern
     OG_BGR = cv2.cvtColor(OG, cv2.COLOR_RGB2BGR)
     
-    log("info", "💾 Speichere Debug-Bilder", path=debug_path)
     cv2.imwrite(os.path.join(debug_path, 'ocr_threshold.png'), thresh)
     cv2.imwrite(os.path.join(debug_path, 'ocr_result.png'), OG_BGR)
 
