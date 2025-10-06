@@ -1,53 +1,40 @@
 import os
-import glob
+import shutil
 
 from capture_scroll_hq import capture_and_crop_screenshots
 from stitch_overlap import stitch_scroll_sequence
 from ocr_extract import ocr_extract
 
-if __name__ == "__main__":
-    # 1. Screenshots aufnehmen UND automatisch croppen 
-    original_shots, cropped_shots = capture_and_crop_screenshots()
-    
-    # 2. Bilder aus Ordner laden
-    script_dir = os.path.dirname(os.path.abspath(__file__))
-    cropped_dir = os.path.join(script_dir, "shots_cropped")
-    cropped_pattern = os.path.join(cropped_dir, "cropped_*.png")
-    available_cropped = sorted(glob.glob(cropped_pattern))
-    output_path = os.path.join(script_dir, "stitched.png")
-    print(f"\n🔄 Füge {len(available_cropped)} Bilder zusammen...")
-    
-    # 3. Bilder zusammenfügen
-    result = stitch_scroll_sequence(
-        image_paths=available_cropped,  # Immer aus Ordner laden!
-        output_path=output_path
-    )
-    
-    print(f"✅ Erfolgreich zusammengefügt!")
-    print(f"   📁 Ausgabe: {result['output_path']}")
-    print(f"   📸 Bilder verwendet: {result['frames_used']}")
-    if result['last_match_score'] is not None:
-        print(f"   🎯 Letzte Übereinstimmung: {result['last_match_score']:.3f}")
-        
-    print("\n🚀 Starte OCR Extraktion...")
-    ocr_result = ocr_extract()
-    
-    # JSON Output für API
-    import json
-    api_response = {
-        "items": ocr_result.get("items", []),
-        "first_date": ocr_result.get("first_date", None),
-        "total_found": len(ocr_result.get("items", [])),
-        "stitching_info": {
-            "frames_used": result['frames_used'],
-            "last_match_score": result['last_match_score'],
-            "output_path": result['output_path']
-        }
-    }
-    
-    print("\n" + "="*50)
-    print("API_JSON_START")
-    print(json.dumps(api_response, ensure_ascii=False, indent=2))
-    print("API_JSON_END")
-    print("="*50)
+script_path = os.path.dirname(os.path.abspath(__file__))
+shots_path = os.path.join(script_path, "shots")
+cropped_path = os.path.join(script_path, "shots_cropped")
 
+debug_path = os.path.join(script_path, "debug", "stitch")
+
+stitched_path = os.path.join(script_path, "stitched.png")
+    
+def run_pipeline():
+
+    # 1. Alte Ordner löschen, wenn sie existieren
+    for directory, description in [(shots_path, "Screenshots"), (cropped_path, "beschnittene Bilder")]:
+        if os.path.exists(directory):
+            shutil.rmtree(directory)
+
+    # 2. Neue Ordner erstellen
+    os.makedirs(shots_path, exist_ok=True)
+    os.makedirs(cropped_path, exist_ok=True)
+
+    # 3. Screenshots aufnehmen und croppen (speichert in shots_path und cropped_path)
+    capture_and_crop_screenshots(shots_path, cropped_path)
+
+    # 4. Gecroppte Bilder zu einem langen Bild zusammenfügen (speichert in stitched_path)
+    #   Die Debug-Bilder werden im debug_path gespeichert 
+    stitch_scroll_sequence(cropped_path, stitched_path, debug_path)
+
+    # 5. OCR auf dem langen Bild ausführen und Ergebnis zurückgeben
+    ocr_result = ocr_extract(stitched_path, debug_path)
+    return ocr_result
+
+
+if __name__ == "__main__":
+    run_pipeline()

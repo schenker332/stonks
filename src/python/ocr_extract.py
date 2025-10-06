@@ -4,6 +4,20 @@ matplotlib.use('Agg')
 import os
 import numpy as np
 import pytesseract
+import json
+import sys
+import traceback
+
+
+# === LOGGING HELPER ===
+def log(level: str, message: str, **data):
+    """Strukturiertes Logging für SSE Stream."""
+    payload = {"level": level, "message": message}
+    if data:
+        payload["data"] = data
+    print("LOG:", json.dumps(payload, ensure_ascii=False))
+    sys.stdout.flush()
+
 
 
 def boxdrawer(start_x, start_y, height, source, destination, mode, buffer, draw):
@@ -36,23 +50,24 @@ def boxdrawer(start_x, start_y, height, source, destination, mode, buffer, draw)
         cv2.rectangle(destination, (x1, start_y), (x2, start_y + height), (0, 0, 255), 1)
     return k
 
-def ocr_extract():
+def ocr_extract(stitched_path, debug_path):
 
+    log("info", "🔍 Starte OCR-Extraktion", path=stitched_path)
+    
     pytesseract.pytesseract.tesseract_cmd = "/opt/homebrew/bin/tesseract"
     os.environ["TESSDATA_PREFIX"] = "/opt/homebrew/share/tessdata/"
-    
-    # Pfad zum stitched image
-    script_dir = os.path.dirname(os.path.abspath(__file__))
-    stitched_path = os.path.join(script_dir, "stitched.png")
-    
+        
     # Image laden
+    log("info", "📂 Lade Bild", path=stitched_path)
     image_BGR = cv2.imread(stitched_path)
 
     # Preprocessing
+    log("info", "🔧 Preprocessing: Konvertiere zu RGB und Graustufen")
     image_RGB = cv2.cvtColor(image_BGR, cv2.COLOR_BGR2RGB)
     gray = cv2.cvtColor(image_BGR, cv2.COLOR_BGR2GRAY)
     _, thresh = cv2.threshold(gray, 253, 255, cv2.THRESH_BINARY) 
     _, first_date_mask = cv2.threshold(gray, 190, 255, cv2.THRESH_BINARY_INV) # für erstes Datum
+    log("info", "🔍 Suche Konturen für Transaktionsboxen")
     contours, _ = cv2.findContours(thresh, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
     
     # Contour-Stats erstellen
@@ -68,6 +83,7 @@ def ocr_extract():
     
     # Kategorisieren und filtern
     transaction_boxes = [s for s in contour_stats if s['area'] > 50000]
+    log("info", "📦 Transaktionsboxen gefiltert", count=len(transaction_boxes))
     
     # Transaktions-Boxen nach Y-Position sortieren (von oben nach unten)
     transaction_boxes_sorted = sorted(transaction_boxes, key=lambda x: x['y'])
@@ -82,6 +98,7 @@ def ocr_extract():
     first_date = ""
     if first_date_length > 0:
         first_date = pytesseract.image_to_string(gray[9:9 + 26, 1350:1350 + first_date_length], lang="deu", config='--psm 6').strip()
+        log("info", "📅 Erstes Datum erkannt", date=first_date)
 
     
 
@@ -116,7 +133,9 @@ def ocr_extract():
         if y - io_date > 20 + h:
             length_date = boxdrawer(start_x=x+20, start_y=y-33, height=26, source=gray, destination=OG, mode='starting_left', buffer=12, draw=True)
             new_date = pytesseract.image_to_string(gray[y-33:y-33 + 26, x+20:x+20 + length_date], lang="deu", config='--psm 6').strip()
-            if new_date: current_date = new_date; print(f"date: {current_date}")
+            if new_date: 
+                current_date = new_date
+                log("info", "📅 Neues Datum erkannt", date=current_date, item=i)
 
 
         # Tag 
@@ -155,7 +174,12 @@ def ocr_extract():
         category = pytesseract.image_to_string(gray[y + 59:y + 59 + 35, x + 98 + b:x + 98 + b + lenght4], lang="deu", config='--psm 6')
 
         # OCR-Ergebnisse ausgeben und sammeln 
-        print(f"item {i}:  {name.strip()} | {category.strip()} | {price.strip()} | {tag.strip()}")
+        log("info", f"📝 Item {i} verarbeitet", 
+            name=name.strip(), 
+            category=category.strip(), 
+            price=price.strip(), 
+            tag=tag.strip(),
+            date=current_date)
         items.append({"name": name.strip(), "category": category.strip(), "price": price.strip(), "tag": tag.strip(), "date": current_date})
 
 
@@ -174,31 +198,15 @@ def ocr_extract():
 
         io_date = y
 
-    # Debug-Bilder speichern
-    debug_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)), "debug")
-    
+
     # Convert RGB back to BGR für OpenCV speichern
     OG_BGR = cv2.cvtColor(OG, cv2.COLOR_RGB2BGR)
     
-    cv2.imwrite(os.path.join(debug_dir, 'ocr_threshold.png'), thresh)
-    cv2.imwrite(os.path.join(debug_dir, 'ocr_result.png'), OG_BGR)
-    
-    # OCR-Ergebnisse anzeigen (exakt wie in text_recog.py)
-    if items:
-        print(f"\n📋 OCR ERGEBNISSE: {len(items)} Transaktionen extrahiert")
-        for i, item in enumerate(items, 1):
-            print(f"{i:2d}. {item['date']:12s} | {item['name']:25s} | {item['category']:15s} | {item['price']:10s} | {item['tag']:10s}")
-    
-    print(f"\n✅ OCR Pipeline abgeschlossen!")
-    print(f"📁 Debug-Bilder gespeichert in: {debug_dir}")
-    
-    return {"items": items, "first_date": first_date}
+    log("info", "💾 Speichere Debug-Bilder", path=debug_path)
+    cv2.imwrite(os.path.join(debug_path, 'ocr_threshold.png'), thresh)
+    cv2.imwrite(os.path.join(debug_path, 'ocr_result.png'), OG_BGR)
 
+    log("info", "✅ OCR Pipeline abgeschlossen", total_items=len(items))
 
+    return items
 
-
-
-
-if __name__ == "__main__":
-    print("🚀 Starting Clean OCR Pipeline für Roll Screenshots...")
-    result = ocr_extract()
