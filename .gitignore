@@ -66,3 +66,7 @@ src/python/debug_*/
 .venv*/
 venv/
 env/
+
+
+# Pipeline Logs
+data/process-log.jsonl
