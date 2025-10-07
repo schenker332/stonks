@@ -51,13 +51,18 @@ export default function ProcessPage() {
     };
   }, []);
 
-  const getLevelColor = (level: string) => {
+  const getLevelStyles = (level: string) => {
     switch (level) {
-      case 'error': return 'text-red-600 bg-red-50';
-      case 'warning': return 'text-yellow-600 bg-yellow-50';
-      case 'info': return 'text-blue-600 bg-blue-50';
-      case 'debug': return 'text-gray-500 bg-gray-50';
-      default: return 'text-gray-600 bg-gray-50';
+      case 'error':
+        return 'border-red-500/40 bg-red-500/10 text-red-200';
+      case 'warning':
+        return 'border-amber-400/40 bg-amber-400/10 text-amber-200';
+      case 'info':
+        return 'border-sky-400/40 bg-sky-500/10 text-sky-200';
+      case 'debug':
+        return 'border-slate-600/60 bg-slate-800/60 text-slate-300';
+      default:
+        return 'border-slate-700 bg-slate-900 text-slate-200';
     }
   };
 
@@ -72,66 +77,81 @@ export default function ProcessPage() {
   };
 
   return (
-    <main className="min-h-screen bg-gray-100 p-8">
-      <div className="max-w-6xl mx-auto">
-        {/* Header */}
-        <div className="mb-6 flex items-center justify-between">
-          <h1 className="text-3xl font-bold text-gray-800">
-            🚀 OCR Pipeline
-          </h1>
-          
-          {/* Status Badge */}
+    <main className="min-h-screen py-12 px-6 text-slate-100">
+      <div className="mx-auto flex max-w-5xl flex-col gap-10">
+        <header className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+          <div>
+            <p className="text-xs uppercase tracking-[0.35em] text-slate-500">
+              Live Monitoring
+            </p>
+            <h1 className="mt-1 text-3xl font-semibold text-slate-50">
+              🚀 OCR Pipeline
+            </h1>
+            <p className="mt-2 text-sm text-slate-400">
+              Echtzeit-Logs aus der Python-Pipeline mit Status-Indikator und
+              Streaming-Updates via Server-Sent Events.
+            </p>
+          </div>
+
           <div className="flex items-center gap-3">
             {isConnected && isRunning && (
-              <div className="flex items-center gap-2 px-4 py-2 bg-green-100 border border-green-300 rounded-lg">
-                <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
-                <span className="text-green-700 font-medium">Läuft...</span>
+              <div className="flex items-center gap-2 rounded-full border border-emerald-500/40 bg-emerald-500/10 px-4 py-2 text-emerald-300 shadow-[0_0_30px_-15px] shadow-emerald-500/50">
+                <span className="h-2 w-2 rounded-full bg-emerald-400 animate-pulse" />
+                <span className="text-sm font-medium uppercase tracking-widest">
+                  Läuft
+                </span>
               </div>
             )}
-            
+
             {!isRunning && (
-              <div className="px-4 py-2 bg-gray-100 border border-gray-300 rounded-lg">
-                <span className="text-gray-700 font-medium">✅ Abgeschlossen</span>
+              <div className="rounded-full border border-slate-700 bg-slate-900/80 px-4 py-2 text-slate-300">
+                <span className="text-sm font-medium uppercase tracking-widest">
+                  ✅ Abgeschlossen
+                </span>
               </div>
             )}
           </div>
-        </div>
+        </header>
 
-        {/* Logs Container */}
-        <div className="bg-white rounded-lg shadow-lg p-6">
-          <h2 className="text-xl font-semibold mb-4 text-gray-700">Live Logs</h2>
-          
-          <div className="space-y-2 max-h-[70vh] overflow-y-auto">
+        <section className="rounded-2xl border border-slate-800/60 bg-slate-950/60 p-6 shadow-xl shadow-slate-900/40">
+          <div className="mb-4 flex items-center justify-between gap-4">
+            <h2 className="text-xl font-semibold text-slate-50">Live Logs</h2>
+            <span className="text-xs uppercase tracking-[0.35em] text-slate-600">
+              Stream
+            </span>
+          </div>
+
+          <div className="max-h-[65vh] space-y-3 overflow-y-auto pr-2 [&::-webkit-scrollbar]:w-1 [&::-webkit-scrollbar-thumb]:rounded-full [&::-webkit-scrollbar-thumb]:bg-slate-700/70">
             {logs.length === 0 && (
-              <div className="text-gray-400 text-center py-8">
-                Warte auf Logs...
+              <div className="rounded-xl border border-slate-800/70 bg-slate-900/70 py-10 text-center text-slate-500">
+                Warte auf Logs…
               </div>
             )}
 
             {logs.map((log, index) => (
               <div
                 key={index}
-                className={`p-3 rounded-lg border ${getLevelColor(log.level)}`}
+                className={`rounded-xl border p-4 shadow-inner shadow-slate-900/40 transition-colors duration-300 ${getLevelStyles(log.level)}`}
               >
-                <div className="flex items-start gap-3">
-                  <span className="text-xl">{getLevelEmoji(log.level)}</span>
-                  
+                <div className="flex items-start gap-4">
+                  <span className="mt-1 text-2xl">{getLevelEmoji(log.level)}</span>
+
                   <div className="flex-1">
-                    <div className="flex items-center gap-2 mb-1">
-                      <span className="text-xs font-mono text-gray-500">
+                    <div className="mb-2 flex flex-wrap items-center gap-3 text-xs uppercase tracking-widest text-slate-500">
+                      <span className="font-mono text-slate-400">
                         {log.timestamp}
                       </span>
-                      <span className="text-xs font-semibold uppercase">
+                      <span className="rounded-full border border-slate-700/60 bg-slate-900/60 px-2 py-0.5 font-semibold text-slate-300">
                         {log.level}
                       </span>
                     </div>
-                    
-                    <div className="font-medium mb-1">
+
+                    <p className="text-sm font-medium text-slate-100">
                       {log.message}
-                    </div>
-                    
+                    </p>
+
                     {log.data && Object.keys(log.data).length > 0 && (
-                      <pre className="text-xs mt-2 p-2 bg-white bg-opacity-50 rounded overflow-x-auto">
+                      <pre className="mt-3 overflow-x-auto rounded-lg border border-slate-800 bg-slate-950/80 p-3 text-[11px] leading-relaxed text-slate-300">
                         {JSON.stringify(log.data, null, 2)}
                       </pre>
                     )}
@@ -140,26 +160,25 @@ export default function ProcessPage() {
               </div>
             ))}
           </div>
-        </div>
+        </section>
 
-        {/* Actions */}
-        <div className="mt-6 flex gap-3">
+        <footer className="flex flex-wrap gap-3">
           <button
-            onClick={() => window.location.href = '/'}
-            className="px-6 py-3 bg-blue-600 text-white rounded-lg font-medium hover:bg-blue-700 transition-all shadow-md hover:shadow-lg"
+            onClick={() => (window.location.href = '/')}
+            className="rounded-full border border-sky-500/50 bg-sky-500/10 px-6 py-3 text-sm font-medium uppercase tracking-widest text-sky-300 transition-all duration-300 hover:border-sky-400 hover:bg-sky-500/20 hover:text-sky-200"
           >
             🏠 Zurück zum Dashboard
           </button>
-          
+
           {!isRunning && (
             <button
               onClick={() => window.location.reload()}
-              className="px-6 py-3 bg-green-600 text-white rounded-lg font-medium hover:bg-green-700 transition-all shadow-md hover:shadow-lg"
+              className="rounded-full border border-emerald-500/60 bg-emerald-500/10 px-6 py-3 text-sm font-medium uppercase tracking-widest text-emerald-200 transition-all duration-300 hover:border-emerald-400 hover:bg-emerald-500/20 hover:text-emerald-100"
             >
               🔄 Erneut ausführen
             </button>
           )}
-        </div>
+        </footer>
       </div>
     </main>
   );

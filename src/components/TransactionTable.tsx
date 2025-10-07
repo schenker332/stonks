@@ -35,54 +35,51 @@ export function TransactionTable({ transactions, onTransactionDeleted }: Transac
   };
 
   return (
-    <div className="mt-6 mb-6 p-4 rounded-lg shadow" style={{ background: '#D89986' }}>
+    <div className="mb-6 mt-6 rounded-2xl border border-slate-800/60 bg-slate-950/70 p-6 shadow-lg shadow-slate-950/40">
       <div className="overflow-x-auto">
-        <table className="min-w-full divide-y divide-gray-200">
+        <table className="min-w-full divide-y divide-slate-800 text-left text-sm text-slate-300">
           <thead>
-            <tr className="bg-white rounded-t-lg">
-              <th className="px-4 py-2 text-left text-sm text-gray-500 rounded-tl-lg">Datum</th>
-              <th className="px-4 py-2 text-left text-sm text-gray-500">Name</th>
-              <th className="px-4 py-2 text-left text-sm text-gray-500">Kategorie</th>
-              <th className="px-4 py-2 text-right text-sm text-gray-500">Preis</th>
-              <th className="px-4 py-2 text-left text-sm text-gray-500">Tag</th>
-              <th className="px-4 py-2 rounded-tr-lg" />
-          </tr>
-        </thead>
-        <tbody className="divide-y divide-gray-100">
-          {transactions.map(tx => (
-            <tr key={tx.id}>
-              <td className="px-4 py-2 text-sm text-gray-700">
-                {new Date(tx.date).toLocaleDateString('de-DE')}
-              </td>
-              <td className="px-4 py-2 text-sm text-gray-700">
-                {tx.name}
-              </td>
-              <td className="px-4 py-2 text-sm text-gray-700">
-                {tx.category}
-              </td>
-              <td
-                className={`px-4 py-2 text-sm font-semibold text-right ${
-                  tx.type === 'income' ? 'text-green-600' : 'text-red-600'
-                }`}
-              >
-                {tx.type === 'expense' ? '- ' : '+ '}€{tx.price.toFixed(2)}
-              </td>
-              <td className="px-4 py-2 text-sm text-gray-700">
-                {tx.tag}
-              </td>
-              <td className="px-4 py-2 text-sm">
-                <button
-                  onClick={() => handleDelete(tx.id)}
-                  className="text-red-500 hover:underline"
-                >
-                  Löschen
-                </button>
-              </td>
+            <tr className="bg-slate-900/80 text-xs uppercase tracking-[0.2em] text-slate-500">
+              <th className="rounded-tl-xl px-4 py-3">Datum</th>
+              <th className="px-4 py-3">Name</th>
+              <th className="px-4 py-3">Kategorie</th>
+              <th className="px-4 py-3 text-right">Preis</th>
+              <th className="px-4 py-3">Tag</th>
+              <th className="rounded-tr-xl px-4 py-3 text-right">Aktion</th>
             </tr>
-          ))}
-        </tbody>
-      </table>
+          </thead>
+          <tbody className="divide-y divide-slate-800/70">
+            {transactions.map((tx) => (
+              <tr
+                key={tx.id}
+                className="transition-colors duration-200 hover:bg-slate-900/60"
+              >
+                <td className="px-4 py-3 text-slate-300">
+                  {new Date(tx.date).toLocaleDateString('de-DE')}
+                </td>
+                <td className="px-4 py-3 text-slate-100">{tx.name}</td>
+                <td className="px-4 py-3 text-slate-300">{tx.category}</td>
+                <td
+                  className={`px-4 py-3 text-right font-semibold ${
+                    tx.type === 'income' ? 'text-emerald-300' : 'text-rose-300'
+                  }`}
+                >
+                  {tx.type === 'expense' ? '- ' : '+ '}€{tx.price.toFixed(2)}
+                </td>
+                <td className="px-4 py-3 text-slate-400">{tx.tag}</td>
+                <td className="px-4 py-3 text-right">
+                  <button
+                    onClick={() => handleDelete(tx.id)}
+                    className="rounded-full border border-rose-500/40 bg-rose-500/10 px-3 py-1 text-xs font-semibold uppercase tracking-widest text-rose-200 transition-all duration-300 hover:border-rose-400 hover:bg-rose-500/20 hover:text-rose-100"
+                  >
+                    Löschen
+                  </button>
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
     </div>
-  </div>
   );
 }

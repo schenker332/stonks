@@ -17,34 +17,38 @@ export function OcrSection({ onOcrComplete }: OcrSectionProps) {
   };
 
   return (
-  <div className="mb-6 p-4 rounded-lg shadow" style={{ background: '#D89986' }}>
-      <h2 className="text-lg font-semibold mb-3 text-gray-800">📷 OCR Transaktions-Import</h2>
-      
-      <div className="flex gap-3">
+    <div className="mb-6 rounded-2xl border border-sky-500/40 bg-sky-500/10 p-6 text-slate-100 shadow-lg shadow-sky-900/50">
+      <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
+        <div>
+          <h2 className="text-lg font-semibold text-slate-50">
+            📷 OCR Transaktions-Import
+          </h2>
+          <p className="text-sm text-sky-100/80">
+            Starte die Pipeline und lasse eingehende Belege automatisch auslesen.
+          </p>
+        </div>
+
         <button
           onClick={handleOcr}
           disabled={ocrLoading}
-          className={`px-6 py-3 rounded-lg font-medium transition-all ${
-            ocrLoading 
-              ? 'bg-gray-400 cursor-not-allowed' 
-              : 'bg-blue-600 hover:bg-blue-700 text-white shadow-md hover:shadow-lg'
+          className={`rounded-full px-6 py-3 text-sm font-semibold uppercase tracking-widest transition-all duration-300 ${
+            ocrLoading
+              ? 'cursor-not-allowed border border-slate-600 bg-slate-800/60 text-slate-500'
+              : 'border border-sky-400/60 bg-sky-500/20 text-sky-100 hover:border-sky-300 hover:bg-sky-500/30 hover:text-sky-50'
           }`}
         >
-          {ocrLoading ? '🔄 Verarbeitung läuft...' : '🚀 OCR starten'}
+          {ocrLoading ? '🔄 Verarbeitung läuft…' : '🚀 OCR starten'}
         </button>
-        
-       
       </div>
-      
-      {/* Status Messages */}
+
       {ocrStatus && (
-        <div className="mt-3 p-3 bg-blue-100 border border-blue-300 rounded text-blue-800">
+        <div className="mt-4 rounded-xl border border-sky-400/40 bg-sky-500/15 px-4 py-3 text-sm text-sky-100">
           {ocrStatus}
         </div>
       )}
-      
+
       {ocrError && (
-        <div className="mt-3 p-3 bg-red-100 border border-red-300 rounded text-red-800">
+        <div className="mt-4 rounded-xl border border-rose-500/40 bg-rose-500/15 px-4 py-3 text-sm text-rose-100">
           {ocrError}
         </div>
       )}

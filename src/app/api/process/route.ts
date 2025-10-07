@@ -2,6 +2,8 @@
 import { NextRequest } from 'next/server';
 import { spawn } from 'child_process';
 import path from 'path';
+import fs from 'fs';
+import { promises as fsp } from 'fs';
 
 export async function GET(request: NextRequest) {
   const encoder = new TextEncoder();
@@ -9,6 +11,19 @@ export async function GET(request: NextRequest) {
   const stream = new ReadableStream({
     start(controller) {
       let isClosed = false;
+      const logDir = path.join(process.cwd(), 'data');
+      const logFile = path.join(logDir, 'process-log.jsonl');
+
+      const safeAppend = async (line: string) => {
+        try {
+          if (!fs.existsSync(logDir)) {
+            await fsp.mkdir(logDir, { recursive: true });
+          }
+          await fsp.appendFile(logFile, line + '\n', 'utf-8');
+        } catch (_) {
+          // ignore file write errors to not break SSE
+        }
+      };
 
       const sendEvent = (data: string) => {
         if (isClosed) return;
@@ -41,7 +56,10 @@ export async function GET(request: NextRequest) {
         lines.forEach((line: string) => {
           if (line.trim().startsWith('LOG:')) {
             const logJson = line.substring(4).trim();
+            // Forward via SSE
             sendEvent(`data: ${logJson}\n\n`);
+            // Persist JSON line
+            safeAppend(logJson);
           } else if (line.trim()) {
             // Debug: Zeige auch andere Python-Ausgaben
             const debugLog = {
@@ -49,7 +67,9 @@ export async function GET(request: NextRequest) {
               message: 'Python Output',
               data: { output: line }
             };
-            sendEvent(`data: ${JSON.stringify(debugLog)}\n\n`);
+            const json = JSON.stringify(debugLog);
+            sendEvent(`data: ${json}\n\n`);
+            safeAppend(json);
           }
         });
       });
@@ -61,7 +81,9 @@ export async function GET(request: NextRequest) {
           message: 'Python Error',
           data: { error: data.toString() }
         };
-        sendEvent(`data: ${JSON.stringify(errorLog)}\n\n`);
+        const json = JSON.stringify(errorLog);
+        sendEvent(`data: ${json}\n\n`);
+        safeAppend(json);
       });
 
       // Prozess-Ende
@@ -73,7 +95,9 @@ export async function GET(request: NextRequest) {
           message: code === 0 ? '✅ Pipeline abgeschlossen' : '❌ Pipeline mit Fehler beendet',
           data: { exitCode: code }
         };
-        sendEvent(`data: ${JSON.stringify(doneLog)}\n\n`);
+        const json = JSON.stringify(doneLog);
+        sendEvent(`data: ${json}\n\n`);
+        safeAppend(json);
         
         // Kurz warten bevor wir schließen (damit letzte Events ankommen)
         setTimeout(() => {

@@ -41,12 +41,12 @@ export function TransactionManager() {
   };
 
   return (
-    <div className="p-4 shadow rounded-lg" style={{ background: '#90A8C3' }}>
+    <div className="rounded-3xl border border-slate-800/60 bg-slate-950/70 p-6 shadow-2xl shadow-slate-950/40 backdrop-blur">
       <OcrSection onOcrComplete={loadTransactions} />
       <TransactionForm onTransactionAdded={addTransaction} />
-      <TransactionTable 
-        transactions={transactions} 
-        onTransactionDeleted={removeTransaction} 
+      <TransactionTable
+        transactions={transactions}
+        onTransactionDeleted={removeTransaction}
       />
     </div>
   );
