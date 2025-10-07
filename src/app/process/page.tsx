@@ -17,10 +17,31 @@ type BoxDetail = {
   h: number;
 };
 
+type StitchedSummary = {
+  width: number;
+  height: number;
+  filesize_mb?: number;
+  imageUrl?: string;
+};
+
+type BoxesSummary = {
+  count: number;
+  boxes: BoxDetail[];
+  imageUrl?: string;
+};
+
+type OcrSummary = {
+  totalItems?: number;
+  firstDate?: string;
+  firstDateFound?: boolean;
+  resultImageUrl?: string;
+};
+
 type SummaryData = {
   window?: { x: number; y: number; width: number; height: number };
-  stitched?: { width: number; height: number; filesize_mb: number };
-  boxes?: { count: number; boxes: BoxDetail[] };
+  stitched?: StitchedSummary;
+  boxes?: BoxesSummary;
+  ocr?: OcrSummary;
 };
 
 export default function ProcessPage() {
@@ -39,7 +60,13 @@ export default function ProcessPage() {
     };
 
     eventSource.onmessage = (event) => {
-      const logEntry = JSON.parse(event.data);
+      let logEntry;
+      try {
+        logEntry = JSON.parse(event.data);
+      } catch (parseError) {
+        console.warn('⚠️ Konnte Log nicht parsen', { eventData: event.data, parseError });
+        return;
+      }
       logEntry.timestamp = new Date().toLocaleTimeString('de-DE');
       
       console.log('📨 Received log:', logEntry); // Debug
@@ -49,9 +76,54 @@ export default function ProcessPage() {
         if (logEntry.message === '🖥️ Finanzguru-Fenster') {
           setSummaryData((prev) => ({ ...prev, window: logEntry.data }));
         } else if (logEntry.message === '🧩 Zusammengesetztes Bild') {
-          setSummaryData((prev) => ({ ...prev, stitched: logEntry.data }));
+          const timestamp = Date.now();
+          setSummaryData((prev) => ({
+            ...prev,
+            stitched: {
+              width: logEntry.data?.width ?? 0,
+              height: logEntry.data?.height ?? 0,
+              filesize_mb: logEntry.data?.filesize_mb,
+              imageUrl: `/api/process/media/stitched.png?ts=${timestamp}`,
+            },
+          }));
         } else if (logEntry.message === '📦 Transaktionsboxen') {
-          setSummaryData((prev) => ({ ...prev, boxes: logEntry.data }));
+          setSummaryData((prev) => ({
+            ...prev,
+            boxes: {
+              count: logEntry.data?.count ?? 0,
+              boxes: logEntry.data?.boxes ?? [],
+              imageUrl: prev.ocr?.resultImageUrl ?? prev.boxes?.imageUrl,
+            },
+          }));
+        }
+      } else if (logEntry.level === 'info') {
+        if (logEntry.message === '📅 Erstes Datum erkannt') {
+          const firstDate = (logEntry.data?.date ?? '').trim();
+          setSummaryData((prev) => ({
+            ...prev,
+            ocr: {
+              ...prev.ocr,
+              firstDate,
+              firstDateFound: Boolean(firstDate),
+            },
+          }));
+        } else if (logEntry.message === '✅ OCR Pipeline abgeschlossen') {
+          const timestamp = Date.now();
+          const resultImageUrl = `/api/process/media/ocr_result.png?ts=${timestamp}`;
+          setSummaryData((prev) => ({
+            ...prev,
+            ocr: {
+              ...prev.ocr,
+              totalItems: logEntry.data?.total_items ?? prev.ocr?.totalItems,
+              resultImageUrl,
+            },
+            boxes: prev.boxes
+              ? {
+                  ...prev.boxes,
+                  imageUrl: resultImageUrl,
+                }
+              : prev.boxes,
+          }));
         }
       }
       
