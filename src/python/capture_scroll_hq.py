@@ -96,6 +96,10 @@ def capture_region_hq(x, y, w, h, out_path):
         out_path
     ]
     subprocess.run(cmd, check=True)
+    
+    # Debug: Bildgröße nach Screenshot auslesen
+    img = Image.open(out_path)
+    log("debug", "📐 Screenshot-Größe", width=img.width, height=img.height, filesize_kb=round(os.path.getsize(out_path) / 1024, 2))
 
 
 def scroll_down(x, y, w, h):
@@ -167,6 +171,10 @@ def capture_and_crop_screenshots(shots_path, cropped_path):
     hide_browser_show_finanzguru()
     time.sleep(0.3)  # Kurz warten bis Fenster gewechselt haben
     x, y, w, h = find_finanzguru_window() #hier wird wirklich gespeichert
+    
+    # Summary: Finanzguru-Fenster (für Dashboard)
+    log("summary", "🖥️ Finanzguru-Fenster", x=x, y=y, width=w, height=h)
+    
     time.sleep(0.5)
 
     prev_path = None

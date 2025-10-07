@@ -81,23 +81,53 @@ def ocr_extract(stitched_path, debug_path):
             'area': area
         })
     
+    log("debug", "📊 Alle Konturen gefunden", total_contours=len(contour_stats))
+    
     # Kategorisieren und filtern
     transaction_boxes = [s for s in contour_stats if s['area'] > 50000]
     log("info", "📦 Transaktionsboxen gefiltert", count=len(transaction_boxes))
     
+    # Summary: Contour-Statistiken (für Dashboard)
+    if transaction_boxes:
+        # Sortiere für Preview
+        sorted_boxes = sorted(transaction_boxes, key=lambda x: x['y'])
+        
+        # Erste 5 Boxen für Detailansicht
+        box_details = []
+        for box in sorted_boxes[:5]:
+            box_details.append({
+                'x': box['x'],
+                'y': box['y'], 
+                'w': box['w'],
+                'h': box['h']
+            })
+        
+        log("summary", "📦 Transaktionsboxen", 
+            count=len(transaction_boxes),
+            boxes=box_details)
+        
+        # Debug: Details zu allen Boxen
+        for i, box in enumerate(sorted_boxes[:10], 1):  # Erste 10 Boxen
+            log("debug", f"📦 Box #{i}", 
+                x=box['x'], 
+                y=box['y'], 
+                width=box['w'], 
+                height=box['h'], 
+                area=round(box['area'], 2))
+    
     # Transaktions-Boxen nach Y-Position sortieren (von oben nach unten)
     transaction_boxes_sorted = sorted(transaction_boxes, key=lambda x: x['y'])
 
-    # Boxdrawer für Text-Bereiche (wie im Original text_recog.py)
+    # Boxdrawer für Text-Bereiche 
     black = cv2.cvtColor(thresh.copy(), cv2.COLOR_GRAY2BGR)
     OG = image_RGB.copy()
 
-    first_date_length = boxdrawer(start_x=1350, start_y=9, height=26, 
+    first_date_length = boxdrawer(start_x=1110, start_y=9, height=26, 
                                  source=first_date_mask, destination=OG, 
                                  mode='starting_left', buffer=12, draw=True)
     first_date = ""
     if first_date_length > 0:
-        first_date = pytesseract.image_to_string(gray[9:9 + 26, 1350:1350 + first_date_length], lang="deu", config='--psm 6').strip()
+        first_date = pytesseract.image_to_string(gray[9:9 + 26, 1110:1110 + first_date_length], lang="deu", config='--psm 6').strip()
         log("info", "📅 Erstes Datum erkannt", date=first_date)
 
     

@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
+import { ProcessSummary } from '@/components/ProcessSummary';
 
 type LogEntry = {
   level: string;
@@ -9,10 +10,24 @@ type LogEntry = {
   timestamp?: string;
 };
 
+type BoxDetail = {
+  x: number;
+  y: number;
+  w: number;
+  h: number;
+};
+
+type SummaryData = {
+  window?: { x: number; y: number; width: number; height: number };
+  stitched?: { width: number; height: number; filesize_mb: number };
+  boxes?: { count: number; boxes: BoxDetail[] };
+};
+
 export default function ProcessPage() {
   const [logs, setLogs] = useState<LogEntry[]>([]);
   const [isRunning, setIsRunning] = useState(true);
   const [isConnected, setIsConnected] = useState(false);
+  const [summaryData, setSummaryData] = useState<SummaryData>({});
 
   useEffect(() => {
     // EventSource für SSE
@@ -28,6 +43,17 @@ export default function ProcessPage() {
       logEntry.timestamp = new Date().toLocaleTimeString('de-DE');
       
       console.log('📨 Received log:', logEntry); // Debug
+      
+      // Summary-Daten extrahieren
+      if (logEntry.level === 'summary') {
+        if (logEntry.message === '🖥️ Finanzguru-Fenster') {
+          setSummaryData((prev) => ({ ...prev, window: logEntry.data }));
+        } else if (logEntry.message === '🧩 Zusammengesetztes Bild') {
+          setSummaryData((prev) => ({ ...prev, stitched: logEntry.data }));
+        } else if (logEntry.message === '📦 Transaktionsboxen') {
+          setSummaryData((prev) => ({ ...prev, boxes: logEntry.data }));
+        }
+      }
       
       setLogs((prev) => [...prev, logEntry]);
 
@@ -61,6 +87,8 @@ export default function ProcessPage() {
         return 'border-sky-400/40 bg-sky-500/10 text-sky-200';
       case 'debug':
         return 'border-slate-600/60 bg-slate-800/60 text-slate-300';
+      case 'summary':
+        return 'border-purple-500/40 bg-purple-500/10 text-purple-200';
       default:
         return 'border-slate-700 bg-slate-900 text-slate-200';
     }
@@ -72,6 +100,7 @@ export default function ProcessPage() {
       case 'warning': return '⚠️';
       case 'info': return 'ℹ️';
       case 'debug': return '🔍';
+      case 'summary': return '📊';
       default: return '📝';
     }
   };
@@ -112,6 +141,9 @@ export default function ProcessPage() {
             )}
           </div>
         </header>
+
+        {/* Summary Dashboard */}
+        <ProcessSummary summaryData={summaryData} />
 
         <section className="rounded-2xl border border-slate-800/60 bg-slate-950/60 p-6 shadow-xl shadow-slate-900/40">
           <div className="mb-4 flex items-center justify-between gap-4">

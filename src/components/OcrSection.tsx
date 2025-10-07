@@ -1,19 +1,17 @@
 // src/components/OcrSection.tsx
 'use client';
-import { useState } from 'react';
+import { useRouter } from 'next/navigation';
 
 interface OcrSectionProps {
   onOcrComplete: () => void;  // Callback wenn OCR fertig ist
 }
 
 export function OcrSection({ onOcrComplete }: OcrSectionProps) {
-  const [ocrLoading, setOcrLoading] = useState(false);
-  const [ocrStatus, setOcrStatus] = useState('');
-  const [ocrError, setOcrError] = useState('');
+  const router = useRouter();
 
-  const handleOcr = async () => {
-    // Direkt zu /process weiterleiten - dort wird die API aufgerufen
-    window.location.href = '/process';
+  const handleOcr = () => {
+    // Verwende Next.js Router für Client-side Navigation
+    router.push('/process');
   };
 
   return (
@@ -30,28 +28,11 @@ export function OcrSection({ onOcrComplete }: OcrSectionProps) {
 
         <button
           onClick={handleOcr}
-          disabled={ocrLoading}
-          className={`rounded-full px-6 py-3 text-sm font-semibold uppercase tracking-widest transition-all duration-300 ${
-            ocrLoading
-              ? 'cursor-not-allowed border border-slate-600 bg-slate-800/60 text-slate-500'
-              : 'border border-sky-400/60 bg-sky-500/20 text-sky-100 hover:border-sky-300 hover:bg-sky-500/30 hover:text-sky-50'
-          }`}
+          className="rounded-full border border-sky-400/60 bg-sky-500/20 px-6 py-3 text-sm font-semibold uppercase tracking-widest text-sky-100 transition-all duration-300 hover:border-sky-300 hover:bg-sky-500/30 hover:text-sky-50"
         >
-          {ocrLoading ? '🔄 Verarbeitung läuft…' : '🚀 OCR starten'}
+          🚀 OCR starten
         </button>
       </div>
-
-      {ocrStatus && (
-        <div className="mt-4 rounded-xl border border-sky-400/40 bg-sky-500/15 px-4 py-3 text-sm text-sky-100">
-          {ocrStatus}
-        </div>
-      )}
-
-      {ocrError && (
-        <div className="mt-4 rounded-xl border border-rose-500/40 bg-rose-500/15 px-4 py-3 text-sm text-rose-100">
-          {ocrError}
-        </div>
-      )}
     </div>
   );
 }

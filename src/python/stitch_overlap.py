@@ -32,6 +32,10 @@ def detect_and_remove_top_border(stitched_path):
     gray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
     height, width = gray.shape
     
+    # Summary: Stitched Bildgröße (für Dashboard)
+    filesize_mb = round(os.path.getsize(stitched_path) / (1024 * 1024), 2)
+    log("summary", "🧩 Zusammengesetztes Bild", width=width, height=height, filesize_mb=filesize_mb)
+    
     log("info", "🔍 Erkenne oberen weißen Balken")
     
     # Suche nach der ersten deutlichen horizontalen Linie
@@ -174,9 +178,6 @@ def stitch_scroll_sequence(cropped_path: str, stitched_path: str, debug_path: st
     stitched = cv2.imread(frames[0])
     for i, path in enumerate(frames[1:], 1):
         next_img = cv2.imread(path)
-        if next_img is None:
-            log("error", f"❌ Konnte Bild nicht laden, überspringe", path=path)
-            continue
         stitched = _stitch_pair(stitched, next_img, template_height_px=TEMPLATE_HEIGHT, step_index=i, debug_path=debug_path)
         log("info", "Stitching-Fortschritt", step=i, filename=os.path.basename(path))
     cv2.imwrite(stitched_path, stitched)
