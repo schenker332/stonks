@@ -42,7 +42,7 @@ export function TransactionManager() {
 
   return (
     <div className="rounded-3xl border border-slate-800/60 bg-slate-950/70 p-6 shadow-2xl shadow-slate-950/40 backdrop-blur">
-      <OcrSection onOcrComplete={loadTransactions} />
+      <OcrSection />
       <TransactionForm onTransactionAdded={addTransaction} />
       <TransactionTable
         transactions={transactions}
