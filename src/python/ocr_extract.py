@@ -7,12 +7,22 @@ import pytesseract
 import json
 import sys
 import traceback
+from datetime import datetime
 
 
 # === LOGGING HELPER ===
-def log(level: str, message: str, **data):
+STEP_NAME = "ocr"
+
+
+def log(level: str, message: str, step: str | None = STEP_NAME, **data):
     """Strukturiertes Logging für SSE Stream."""
-    payload = {"level": level, "message": message}
+    payload = {
+        "level": level,
+        "message": message,
+        "timestamp": datetime.utcnow().isoformat() + "Z",
+    }
+    if step:
+        payload["step"] = step
     if data:
         payload["data"] = data
     print("LOG:", json.dumps(payload, ensure_ascii=False))
@@ -81,7 +91,7 @@ def ocr_extract(stitched_path, debug_path):
             'area': area
         })
     
-    log("debug", "📊 Alle Konturen gefunden", total_contours=len(contour_stats))
+    log("info", "📊 Alle Konturen gefunden", total_contours=len(contour_stats))
     
     # Kategorisieren und filtern
     transaction_boxes = [s for s in contour_stats if s['area'] > 50000]
@@ -102,18 +112,24 @@ def ocr_extract(stitched_path, debug_path):
                 'h': box['h']
             })
         
-        log("summary", "📦 Transaktionsboxen", 
+        log(
+            "summary",
+            "📦 Transaktionsboxen",
             count=len(transaction_boxes),
-            boxes=box_details)
+            boxes=box_details,
+        )
         
         # Debug: Details zu allen Boxen
         for i, box in enumerate(sorted_boxes[:10], 1):  # Erste 10 Boxen
-            log("debug", f"📦 Box #{i}", 
-                x=box['x'], 
-                y=box['y'], 
-                width=box['w'], 
-                height=box['h'], 
-                area=round(box['area'], 2))
+            log(
+                "info",
+                f"📦 Box #{i}",
+                x=box['x'],
+                y=box['y'],
+                width=box['w'],
+                height=box['h'],
+                area=round(box['area'], 2),
+            )
     
     # Transaktions-Boxen nach Y-Position sortieren (von oben nach unten)
     transaction_boxes_sorted = sorted(transaction_boxes, key=lambda x: x['y'])
@@ -238,4 +254,3 @@ def ocr_extract(stitched_path, debug_path):
     log("info", "✅ OCR Pipeline abgeschlossen", total_items=len(items))
 
     return items
-

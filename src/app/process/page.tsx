@@ -4,15 +4,15 @@ import { Fragment, useCallback, useEffect, useMemo, useRef, useState } from 'rea
 import { useRouter } from 'next/navigation';
 import { ProcessSummary } from '@/components/ProcessSummary';
 
+type StepId = 'capture' | 'stitch' | 'ocr';
+
 type LogEntry = {
   level: string;
   message: string;
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  data?: any;
+  data?: Record<string, unknown>;
   timestamp?: string;
+  step?: StepId | string;
 };
-
-type StepId = 'capture' | 'stitch' | 'ocr';
 
 type StepStatus = 'idle' | 'running' | 'done' | 'error';
 
@@ -55,6 +55,34 @@ type PipelineState = {
   summaryData: SummaryData;
   pipelineFinished: boolean;
   hasErrors: boolean;
+};
+
+type RawOcrItem = {
+  name?: string;
+  category?: string;
+  price?: string;
+  tag?: string;
+  date?: string;
+};
+
+type EditableOcrItemStatus = 'pending' | 'saved' | 'error';
+
+type EditableOcrItem = {
+  id: string;
+  index: number;
+  include: boolean;
+  status: EditableOcrItemStatus;
+  error?: string;
+  name: string;
+  category: string;
+  tag: string;
+  priceRaw: string;
+  priceInput: string;
+  priceValue: number;
+  type: 'income' | 'expense';
+  dateRaw: string;
+  dateISO: string | null;
+  dateEdited: boolean;
 };
 
 const STEP_CONFIGS: StepConfig[] = [
@@ -108,12 +136,184 @@ const STEP_CONFIGS: StepConfig[] = [
   },
 ];
 
+const STEP_INDEX_BY_ID: Record<StepId, number> = {
+  capture: 0,
+  stitch: 1,
+  ocr: 2,
+};
+
 const RUN_END_MESSAGES = new Set(['✅ Pipeline abgeschlossen', '❌ Pipeline mit Fehler beendet']);
 const STREAM_TIMESTAMP_LOCALE = 'de-DE';
+
+function isStepId(value: unknown): value is StepId {
+  return value === 'capture' || value === 'stitch' || value === 'ocr';
+}
 
 function isRunEndMessage(message?: string) {
   if (!message) return false;
   return RUN_END_MESSAGES.has(message);
+}
+
+function normalizeSingleLog(entry: LogEntry, fallback: Partial<LogEntry> = {}): LogEntry {
+  const merged: LogEntry = { ...fallback, ...entry };
+  const timestamp = typeof merged.timestamp === 'string' ? merged.timestamp : undefined;
+  const data =
+    merged.data && typeof merged.data === 'object'
+      ? (merged.data as Record<string, unknown>)
+      : undefined;
+
+  return {
+    ...merged,
+    timestamp,
+    data,
+  };
+}
+
+function parseEmbeddedPythonOutput(entry: LogEntry): LogEntry | null {
+  if (!entry.data || typeof entry.data !== 'object') return null;
+  const raw = (entry.data as Record<string, unknown>).output;
+  if (typeof raw !== 'string') return null;
+  try {
+    const parsed = JSON.parse(raw) as LogEntry;
+    return normalizeSingleLog(parsed, {
+      timestamp: entry.timestamp,
+      step: entry.step,
+    });
+  } catch {
+    return null;
+  }
+}
+
+function normalizeLogs(entries: LogEntry[]): LogEntry[] {
+  const normalized: LogEntry[] = [];
+
+  entries.forEach((entry) => {
+    if (entry.message === 'Python Output') {
+      const parsed = parseEmbeddedPythonOutput(entry);
+      if (parsed) {
+        normalized.push(parsed);
+        return;
+      }
+    }
+
+    normalized.push(normalizeSingleLog(entry));
+  });
+
+  return normalized;
+}
+
+function formatTimestamp(value?: string) {
+  if (!value) return null;
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return null;
+  return date.toLocaleTimeString(STREAM_TIMESTAMP_LOCALE);
+}
+
+function generateItemId(index: number) {
+  const cryptoRef = typeof globalThis !== 'undefined' ? (globalThis as typeof globalThis & { crypto?: Crypto }).crypto : undefined;
+  if (cryptoRef && typeof cryptoRef.randomUUID === 'function') {
+    return cryptoRef.randomUUID();
+  }
+  return `ocr-item-${Date.now()}-${index}`;
+}
+
+function parsePrice(value?: string) {
+  if (!value) {
+    return { amount: 0, type: 'expense' as const };
+  }
+
+  const trimmed = value.replace(/\s/g, '');
+  const negative = trimmed.includes('-');
+  const sanitized = trimmed.replace(/[^\d.,-]/g, '');
+  const normalized = sanitized.replace(/\./g, '').replace(',', '.');
+  const numeric = Number.parseFloat(normalized);
+
+  if (Number.isNaN(numeric)) {
+    return { amount: 0, type: negative ? ('expense' as const) : ('income' as const) };
+  }
+
+  const type = negative || numeric < 0 ? ('expense' as const) : ('income' as const);
+  return { amount: Math.abs(numeric), type };
+}
+
+function parseDateWithYear(value: string | undefined, year: number) {
+  if (!value) return null;
+  const match = value.match(/(\d{1,2})\.(\d{1,2})/);
+  if (!match) return null;
+
+  const day = Number.parseInt(match[1] ?? '', 10);
+  const month = Number.parseInt(match[2] ?? '', 10);
+
+  if (!Number.isFinite(day) || !Number.isFinite(month)) return null;
+
+  const date = new Date(year, month - 1, day);
+  if (Number.isNaN(date.getTime())) return null;
+
+  return date;
+}
+
+function formatDateInput(date: Date | null) {
+  if (!date) return null;
+  const year = date.getFullYear();
+  const month = `${date.getMonth() + 1}`.padStart(2, '0');
+  const day = `${date.getDate()}`.padStart(2, '0');
+  return `${year}-${month}-${day}`;
+}
+
+function buildEditableItems(rawItems: RawOcrItem[], year: number): EditableOcrItem[] {
+  return rawItems.map((item, index) => {
+    const priceInfo = parsePrice(item.price);
+    const parsedDate = parseDateWithYear(item.date, year);
+
+    return {
+      id: generateItemId(index),
+      index,
+      include: true,
+      status: 'pending',
+      error: undefined,
+      name: (item.name ?? '').trim(),
+      category: (item.category ?? '').trim(),
+      tag: (item.tag ?? '').trim(),
+      priceRaw: item.price ?? '',
+      priceInput:
+        priceInfo.amount > 0 ? priceInfo.amount.toFixed(2).replace('.', ',') : '',
+      priceValue: priceInfo.amount,
+      type: priceInfo.type,
+      dateRaw: item.date ?? '',
+      dateISO: formatDateInput(parsedDate),
+      dateEdited: false,
+    };
+  });
+}
+
+function updateItemsForYear(items: EditableOcrItem[], year: number) {
+  return items.map((item) => {
+    if (item.dateEdited) return item;
+    const parsedDate = parseDateWithYear(item.dateRaw, year);
+    return {
+      ...item,
+      dateISO: formatDateInput(parsedDate),
+    };
+  });
+}
+
+function normalizePriceInput(input: string, currentType: 'income' | 'expense') {
+  const trimmed = input.trim();
+  if (!trimmed) {
+    return { amount: 0, type: currentType };
+  }
+
+  const negative = trimmed.includes('-');
+  const sanitized = trimmed.replace(/[^\d.,-]/g, '');
+  const normalized = sanitized.replace(/\./g, '').replace(',', '.');
+  const numeric = Number.parseFloat(normalized);
+
+  if (Number.isNaN(numeric)) {
+    return { amount: 0, type: currentType };
+  }
+
+  const type = negative || numeric < 0 ? ('expense' as const) : currentType;
+  return { amount: Math.abs(numeric), type };
 }
 
 function extractLatestRun(allLogs: LogEntry[]) {
@@ -136,16 +336,30 @@ function extractLatestRun(allLogs: LogEntry[]) {
     runs.push(current);
   }
 
-  return runs[runs.length - 1] ?? [];
+  if (runs.length === 0) return [];
+
+  let candidate = runs[runs.length - 1];
+  if (
+    candidate?.length === 1 &&
+    candidate[0]?.data &&
+    typeof (candidate[0].data as { exitCode?: unknown }).exitCode !== 'undefined'
+  ) {
+    candidate = runs[runs.length - 2] ?? candidate;
+  }
+
+  return candidate ?? [];
 }
 
 function matchStepIndex(log: LogEntry): number | null {
+  if (isStepId(log.step)) {
+    return STEP_INDEX_BY_ID[log.step];
+  }
+
   const message = log.message ?? '';
-  const dataString = log.data ? JSON.stringify(log.data) : '';
 
   for (let index = 0; index < STEP_CONFIGS.length; index += 1) {
     const config = STEP_CONFIGS[index];
-    const matched = config.matchers.some((regex) => regex.test(message) || regex.test(dataString));
+    const matched = config.matchers.some((regex) => regex.test(message));
     if (matched) return index;
   }
 
@@ -155,11 +369,13 @@ function matchStepIndex(log: LogEntry): number | null {
     if (message.includes('Transaktionsboxen')) return 2;
   }
 
-  if (log.level === 'error' && typeof log.data?.error === 'string') {
-    const errorText = log.data.error;
-    if (/capture/i.test(errorText)) return 0;
-    if (/stitch/i.test(errorText)) return 1;
-    if (/ocr/i.test(errorText)) return 2;
+  if (log.level === 'error') {
+    const errorText = (log.data as Record<string, unknown> | undefined)?.error;
+    if (typeof errorText === 'string') {
+      if (/capture/i.test(errorText)) return 0;
+      if (/stitch/i.test(errorText)) return 1;
+      if (/ocr/i.test(errorText)) return 2;
+    }
   }
 
   return null;
@@ -181,29 +397,70 @@ function resolveStepIndex(log: LogEntry, currentIndex: number) {
 function buildSummaryData(logs: LogEntry[]): SummaryData {
   return logs.reduce<SummaryData>((acc, log) => {
     const next: SummaryData = { ...acc };
+    const data = log.data as Record<string, unknown> | undefined;
 
     if (log.level === 'summary') {
       if (log.message === '🖥️ Finanzguru-Fenster') {
-        next.window = log.data;
+        const xValue = data?.x;
+        const yValue = data?.y;
+        const widthValue = data?.width;
+        const heightValue = data?.height;
+
+        next.window = {
+          x: typeof xValue === 'number' ? xValue : next.window?.x ?? 0,
+          y: typeof yValue === 'number' ? yValue : next.window?.y ?? 0,
+          width: typeof widthValue === 'number' ? widthValue : next.window?.width ?? 0,
+          height: typeof heightValue === 'number' ? heightValue : next.window?.height ?? 0,
+        };
       } else if (log.message === '🧩 Zusammengesetztes Bild') {
         const ts = Date.now();
+        const widthValue = data?.width;
+        const heightValue = data?.height;
+        const sizeValue = data?.filesize_mb;
         next.stitched = {
-          width: log.data?.width ?? 0,
-          height: log.data?.height ?? 0,
-          filesize_mb: log.data?.filesize_mb,
+          width: typeof widthValue === 'number' ? widthValue : next.stitched?.width ?? 0,
+          height: typeof heightValue === 'number' ? heightValue : next.stitched?.height ?? 0,
+          filesize_mb: typeof sizeValue === 'number' ? sizeValue : next.stitched?.filesize_mb,
           imageUrl: `/api/process/media/stitched.png?ts=${ts}`,
         };
       } else if (log.message === '📦 Transaktionsboxen') {
+        const countValue = data?.count;
+        const boxesValue = data?.boxes;
+
         const prevBoxes = next.boxes;
+        let boxes: BoxDetail[] = prevBoxes?.boxes ?? [];
+        if (Array.isArray(boxesValue)) {
+          boxes = boxesValue
+            .flatMap((item) => {
+              if (!item || typeof item !== 'object') return [];
+              const record = item as Record<string, unknown>;
+              const xVal = record.x;
+              const yVal = record.y;
+              const wVal = record.w;
+              const hVal = record.h;
+              if (
+                typeof xVal === 'number' &&
+                typeof yVal === 'number' &&
+                typeof wVal === 'number' &&
+                typeof hVal === 'number'
+              ) {
+                return [{ x: xVal, y: yVal, w: wVal, h: hVal }];
+              }
+              return [];
+            })
+            .slice(0, 5);
+        }
+
         next.boxes = {
-          count: log.data?.count ?? prevBoxes?.count ?? 0,
-          boxes: log.data?.boxes ?? prevBoxes?.boxes ?? [],
+          count: typeof countValue === 'number' ? countValue : prevBoxes?.count ?? boxes.length,
+          boxes,
           imageUrl: prevBoxes?.imageUrl ?? next.ocr?.resultImageUrl,
         };
       }
     } else if (log.level === 'info') {
       if (log.message === '📅 Erstes Datum erkannt') {
-        const firstDate = (log.data?.date ?? '').trim();
+        const firstDateRaw = data?.date;
+        const firstDate = typeof firstDateRaw === 'string' ? firstDateRaw.trim() : '';
         next.ocr = {
           ...next.ocr,
           firstDate,
@@ -212,9 +469,11 @@ function buildSummaryData(logs: LogEntry[]): SummaryData {
       } else if (log.message === '✅ OCR Pipeline abgeschlossen') {
         const ts = Date.now();
         const resultImageUrl = `/api/process/media/ocr_result.png?ts=${ts}`;
+        const totalItemsValue = data?.total_items;
         next.ocr = {
           ...next.ocr,
-          totalItems: log.data?.total_items ?? next.ocr?.totalItems,
+          totalItems:
+            typeof totalItemsValue === 'number' ? totalItemsValue : next.ocr?.totalItems,
           resultImageUrl,
         };
         if (next.boxes) {
@@ -315,10 +574,187 @@ export default function ProcessPage() {
   const [logs, setLogs] = useState<LogEntry[]>([]);
   const [isRunning, setIsRunning] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
-  const [isRefreshing, setIsRefreshing] = useState(false);
   const [fetchError, setFetchError] = useState<string | null>(null);
-  const [lastUpdated, setLastUpdated] = useState<number | null>(null);
+  const [lastEventAt, setLastEventAt] = useState<string | null>(null);
   const [selectedStepId, setSelectedStepId] = useState<StepId | null>(null);
+  const [ocrItems, setOcrItems] = useState<EditableOcrItem[]>([]);
+  const [isLoadingItems, setIsLoadingItems] = useState(false);
+  const [itemsError, setItemsError] = useState<string | null>(null);
+  const [itemsMessage, setItemsMessage] = useState<string | null>(null);
+  const [isImporting, setIsImporting] = useState(false);
+  const [itemsYear, setItemsYear] = useState(() => new Date().getFullYear());
+
+  const itemsYearRef = useRef(itemsYear);
+  useEffect(() => {
+    itemsYearRef.current = itemsYear;
+  }, [itemsYear]);
+
+  const loadOcrItems = useCallback(async () => {
+    setIsLoadingItems(true);
+    setItemsError(null);
+    setItemsMessage(null);
+    try {
+      const response = await fetch('/api/process/items', { cache: 'no-store' });
+      if (!response.ok) {
+        throw new Error('Fehler beim Laden der OCR Items');
+      }
+
+      const payload = await response.json();
+      const rawItems: RawOcrItem[] = Array.isArray(payload?.items) ? payload.items : [];
+      const yearToUse = itemsYearRef.current || new Date().getFullYear();
+
+      if (rawItems.length === 0) {
+        setOcrItems([]);
+        setItemsMessage('Keine OCR Items vorhanden.');
+      } else {
+        setOcrItems(buildEditableItems(rawItems, yearToUse));
+        setItemsMessage(null);
+      }
+    } catch (error) {
+      console.warn('⚠️ OCR Items konnten nicht geladen werden:', error);
+      setItemsError(error instanceof Error ? error.message : 'Fehler beim Laden der OCR Items');
+    } finally {
+      setIsLoadingItems(false);
+    }
+  }, []);
+
+  const updateItem = useCallback((id: string, updater: (item: EditableOcrItem) => EditableOcrItem) => {
+    setOcrItems((prev) =>
+      prev.map((item) => {
+        if (item.id !== id) return item;
+        const next = updater(item);
+        return { ...next, status: 'pending', error: undefined };
+      }),
+    );
+  }, []);
+
+  const handleIncludeToggle = useCallback(
+    (id: string) => {
+      updateItem(id, (item) => ({ ...item, include: !item.include }));
+    },
+    [updateItem],
+  );
+
+  const handleItemFieldChange = useCallback(
+    (id: string, field: 'name' | 'category' | 'tag', value: string) => {
+      updateItem(id, (item) => ({ ...item, [field]: value }));
+    },
+    [updateItem],
+  );
+
+  const handleItemPriceChange = useCallback(
+    (id: string, value: string) => {
+      updateItem(id, (item) => {
+        const normalized = normalizePriceInput(value, item.type);
+        return {
+          ...item,
+          priceInput: value,
+          priceValue: normalized.amount,
+          type: normalized.amount === 0 ? item.type : normalized.type,
+        };
+      });
+    },
+    [updateItem],
+  );
+
+  const handleItemTypeChange = useCallback(
+    (id: string, type: 'income' | 'expense') => {
+      updateItem(id, (item) => ({ ...item, type }));
+    },
+    [updateItem],
+  );
+
+  const handleItemDateChange = useCallback(
+    (id: string, value: string) => {
+      updateItem(id, (item) => ({
+        ...item,
+        dateISO: value || null,
+        dateEdited: true,
+      }));
+    },
+    [updateItem],
+  );
+
+  const handleYearChange = useCallback((value: string) => {
+    const parsed = Number.parseInt(value, 10);
+    if (Number.isNaN(parsed)) {
+      return;
+    }
+    setItemsYear(parsed);
+    setOcrItems((prev) => updateItemsForYear(prev, parsed));
+  }, []);
+
+  const hasImportableItems = useMemo(
+    () =>
+      ocrItems.some(
+        (item) =>
+          item.include && item.name.trim() && item.priceValue > 0 && item.dateISO && item.type,
+      ),
+    [ocrItems],
+  );
+
+  const handleImport = useCallback(async () => {
+    const candidates = ocrItems.filter(
+      (item) =>
+        item.include && item.name.trim() && item.priceValue > 0 && item.dateISO && item.type,
+    );
+
+    if (candidates.length === 0) {
+      setItemsError('Keine gültigen Items zum Import ausgewählt.');
+      return;
+    }
+
+    setIsImporting(true);
+    setItemsError(null);
+    setItemsMessage(null);
+
+    try {
+      const response = await fetch('/api/process/items/import', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          items: candidates.map((item) => ({
+            id: item.id,
+            name: item.name.trim(),
+            category: item.category.trim(),
+            tag: item.tag.trim(),
+            type: item.type,
+            price: Number(item.priceValue.toFixed(2)),
+            date: item.dateISO,
+            description: item.name.trim(),
+          })),
+        }),
+      });
+
+      const payload = await response.json().catch(() => ({}));
+      if (!response.ok) {
+        throw new Error(payload?.error || payload?.message || 'Import fehlgeschlagen.');
+      }
+
+      const importedCount =
+        typeof payload?.imported === 'number' ? payload.imported : candidates.length;
+      const importedIds = new Set(candidates.map((item) => item.id));
+
+      setOcrItems((prev) =>
+        prev.map((item) =>
+          importedIds.has(item.id)
+            ? {
+                ...item,
+                status: 'saved',
+                include: false,
+              }
+            : item,
+        ),
+      );
+
+      setItemsMessage(`Import abgeschlossen: ${importedCount} Einträge gespeichert.`);
+    } catch (error) {
+      console.error('Import fehlgeschlagen', error);
+      setItemsError(error instanceof Error ? error.message : 'Import fehlgeschlagen.');
+    } finally {
+      setIsImporting(false);
+    }
+  }, [ocrItems]);
 
   const closeEventSource = useCallback(() => {
     if (eventSourceRef.current) {
@@ -328,7 +764,6 @@ export default function ProcessPage() {
   }, []);
 
   const loadLatestLogs = useCallback(async () => {
-    setIsRefreshing(true);
     setFetchError(null);
     try {
       const response = await fetch('/api/process/logs', { cache: 'no-store' });
@@ -336,16 +771,14 @@ export default function ProcessPage() {
         throw new Error('Fehler beim Laden der Logs');
       }
 
-      const payload: LogEntry[] = await response.json();
-      const latestRun = extractLatestRun(payload);
-      const decorated = latestRun.map((entry) => ({
-        ...entry,
-        timestamp: entry.timestamp ?? '–',
-      }));
+      const payload = (await response.json()) as LogEntry[];
+      const normalized = normalizeLogs(payload);
+      const latestRun = extractLatestRun(normalized);
 
-      setLogs(decorated);
+      setLogs(latestRun);
       setIsRunning(false);
-      setLastUpdated(Date.now());
+      const now = new Date().toISOString();
+      setLastEventAt(now);
     } catch (error: unknown) {
       if (error instanceof Error) {
         setFetchError(error.message);
@@ -354,16 +787,16 @@ export default function ProcessPage() {
       }
     } finally {
       setIsLoading(false);
-      setIsRefreshing(false);
     }
   }, []);
 
   useEffect(() => {
     loadLatestLogs();
+    loadOcrItems();
     return () => {
       closeEventSource();
     };
-  }, [closeEventSource, loadLatestLogs]);
+  }, [closeEventSource, loadLatestLogs, loadOcrItems]);
 
   const handleStartPipeline = useCallback(() => {
     if (isRunning) return;
@@ -378,20 +811,23 @@ export default function ProcessPage() {
 
     eventSource.onmessage = (event) => {
       try {
-        const parsed: LogEntry = JSON.parse(event.data);
-        const decorated: LogEntry = {
-          ...parsed,
-          timestamp: new Date().toLocaleTimeString(STREAM_TIMESTAMP_LOCALE),
-        };
-        setLogs((prev) => [...prev, decorated]);
-        setLastUpdated(Date.now());
+        const parsed = JSON.parse(event.data) as LogEntry;
+        const enriched: LogEntry = parsed.timestamp
+          ? parsed
+          : { ...parsed, timestamp: new Date().toISOString() };
+        const normalizedBatch = normalizeLogs([enriched]);
+        if (normalizedBatch.length === 0) return;
 
-        if (isRunEndMessage(parsed.message)) {
+        setLogs((prev) => [...prev, ...normalizedBatch]);
+        setLastEventAt(new Date().toISOString());
+
+        if (isRunEndMessage(enriched.message)) {
           setIsRunning(false);
           closeEventSource();
           // kurze Pause, damit die Datei sicher geschrieben ist
           setTimeout(() => {
             loadLatestLogs();
+            loadOcrItems();
           }, 400);
         }
       } catch (error) {
@@ -404,7 +840,7 @@ export default function ProcessPage() {
       setIsRunning(false);
       closeEventSource();
     };
-  }, [closeEventSource, isRunning, loadLatestLogs]);
+  }, [closeEventSource, isRunning, loadLatestLogs, loadOcrItems]);
 
   const pipelineState = useMemo(() => derivePipelineState(logs), [logs]);
 
@@ -424,11 +860,10 @@ export default function ProcessPage() {
     [selectedStepId, stepCards],
   );
 
-  const hasAnyLogs = stepCards.some((card) => card.logs.length > 0);
   const hasErrors = pipelineState.hasErrors || stepCards.some((card) => card.status === 'error');
   const pipelineFinished = pipelineState.pipelineFinished && !isRunning;
 
-  const statusBadge = (() => {
+  const headerStatus = (() => {
     if (isRunning) {
       return {
         label: 'Pipeline läuft',
@@ -442,21 +877,27 @@ export default function ProcessPage() {
         className: 'border-rose-500/40 bg-rose-500/10 text-rose-200',
       };
     }
-    if (pipelineFinished && hasAnyLogs) {
-      return {
-        label: 'Letzter Lauf abgeschlossen',
-        className: 'border-slate-700 bg-slate-900/80 text-slate-300',
-      };
-    }
-    return {
-      label: 'Wartet auf Start',
-      className: 'border-slate-700 bg-slate-900/60 text-slate-400',
-    };
+    return null;
   })();
 
-  const lastUpdatedLabel = lastUpdated
-    ? new Date(lastUpdated).toLocaleTimeString(STREAM_TIMESTAMP_LOCALE)
-    : '–';
+  const latestLogTimestamp = useMemo(() => {
+    for (let index = logs.length - 1; index >= 0; index -= 1) {
+      const entry = logs[index];
+      if (!entry.timestamp) continue;
+      const parsed = new Date(entry.timestamp);
+      if (!Number.isNaN(parsed.getTime())) {
+        return parsed.toISOString();
+      }
+    }
+    return null;
+  }, [logs]);
+
+  const formattedLastAdded =
+    latestLogTimestamp
+      ? new Date(latestLogTimestamp).toLocaleTimeString(STREAM_TIMESTAMP_LOCALE)
+      : lastEventAt
+        ? new Date(lastEventAt).toLocaleTimeString(STREAM_TIMESTAMP_LOCALE)
+        : null;
 
   return (
     <main className="min-h-screen bg-slate-950 py-12 px-6 text-slate-100">
@@ -477,12 +918,9 @@ export default function ProcessPage() {
             </div>
 
             <div className="flex flex-wrap items-center gap-3 text-xs text-slate-500">
-              <span className="rounded-full border border-slate-700 bg-slate-900/60 px-3 py-1 font-mono tracking-widest">
-                Zuletzt aktualisiert: {lastUpdatedLabel}
-              </span>
-              {pipelineFinished && !hasErrors && (
-                <span className="rounded-full border border-emerald-500/40 bg-emerald-500/10 px-3 py-1 font-semibold uppercase tracking-widest text-emerald-200">
-                  ✅ Lauf abgeschlossen
+              {formattedLastAdded && (
+                <span className="rounded-full border border-slate-700 bg-slate-900/60 px-3 py-1 font-mono tracking-widest text-slate-300">
+                  Zuletzt hinzugefügt: {formattedLastAdded}
                 </span>
               )}
             </div>
@@ -495,11 +933,13 @@ export default function ProcessPage() {
           </div>
 
           <div className="flex flex-col gap-3 sm:items-end">
-            <div
-              className={`flex items-center gap-2 rounded-full border px-5 py-2 text-xs font-semibold uppercase tracking-[0.35em] transition-colors duration-300 ${statusBadge.className}`}
-            >
-              <span>{statusBadge.label}</span>
-            </div>
+            {headerStatus && (
+              <div
+                className={`flex items-center gap-2 rounded-full border px-5 py-2 text-xs font-semibold uppercase tracking-[0.35em] transition-colors duration-300 ${headerStatus.className}`}
+              >
+                <span>{headerStatus.label}</span>
+              </div>
+            )}
 
             <div className="flex flex-wrap justify-end gap-2">
               <button
@@ -513,19 +953,6 @@ export default function ProcessPage() {
                 }`}
               >
                 🚀 OCR manuell starten
-              </button>
-
-              <button
-                type="button"
-                onClick={loadLatestLogs}
-                disabled={isRefreshing}
-                className={`rounded-full border px-5 py-2 text-xs font-semibold uppercase tracking-[0.35em] transition-colors duration-300 ${
-                  isRefreshing
-                    ? 'cursor-wait border-slate-700 bg-slate-900/60 text-slate-500'
-                    : 'border-sky-500/50 bg-sky-500/10 text-sky-200 hover:border-sky-400 hover:bg-sky-500/20 hover:text-sky-100'
-                }`}
-              >
-                ↻ Logs aktualisieren
               </button>
 
               <button
@@ -656,9 +1083,215 @@ export default function ProcessPage() {
             })}
           </section>
 
-          {!isLoading && !hasAnyLogs && (
+          {!isLoading && logs.length === 0 && (
             <div className="mt-16 rounded-2xl border border-slate-800 bg-slate-950/70 p-8 text-center text-slate-400">
               Noch keine Logs vorhanden. Starte die Pipeline, um neue Einträge zu erzeugen.
+            </div>
+          )}
+        </section>
+
+        <section className="rounded-3xl border border-slate-800/60 bg-slate-950/70 p-6 shadow-xl shadow-slate-950/40">
+          <div className="mb-6 flex flex-wrap items-center justify-between gap-4">
+            <div>
+              <h2 className="text-xl font-semibold text-slate-50">OCR Ergebnisse prüfen</h2>
+              <p className="text-sm text-slate-400">
+                Überprüfe die erkannten Transaktionen, passe sie bei Bedarf an und übernimm sie
+                erst danach in die Datenbank.
+              </p>
+            </div>
+
+            <div className="flex flex-wrap items-end gap-4">
+              <div className="flex items-end gap-2">
+                <label className="flex flex-col text-xs uppercase tracking-[0.35em] text-slate-500">
+                  Jahr für Datumszuordnung
+                  <input
+                    type="number"
+                    value={itemsYear}
+                    min={2000}
+                    max={2100}
+                    onChange={(event) => handleYearChange(event.target.value)}
+                    className="mt-2 w-24 rounded-lg border border-slate-700 bg-slate-900 px-3 py-2 text-sm text-slate-100 focus:border-sky-400 focus:outline-none"
+                  />
+                </label>
+                <button
+                  type="button"
+                  onClick={loadOcrItems}
+                  className="h-10 rounded-full border border-slate-700 bg-slate-900/60 px-4 text-xs font-semibold uppercase tracking-[0.3em] text-slate-300 transition-colors duration-300 hover:border-slate-500 hover:bg-slate-800"
+                >
+                  🔄 Neu laden
+                </button>
+              </div>
+
+              <button
+                type="button"
+                onClick={handleImport}
+                disabled={!hasImportableItems || isImporting}
+                className={`h-10 rounded-full border px-5 text-xs font-semibold uppercase tracking-[0.35em] transition-colors duration-300 ${
+                  !hasImportableItems || isImporting
+                    ? 'cursor-not-allowed border-slate-700 bg-slate-900/60 text-slate-500'
+                    : 'border-emerald-500/60 bg-emerald-500/10 text-emerald-100 hover:border-emerald-400 hover:bg-emerald-500/20 hover:text-emerald-50'
+                }`}
+              >
+                💾 In DB übernehmen
+              </button>
+            </div>
+          </div>
+
+          {isLoadingItems && (
+            <div className="mb-4 rounded-2xl border border-slate-800/70 bg-slate-900/70 p-4 text-center text-sm text-slate-400">
+              OCR-Ergebnisse werden geladen…
+            </div>
+          )}
+
+          {itemsError && (
+            <div className="mb-4 rounded-2xl border border-rose-500/40 bg-rose-500/10 p-4 text-sm text-rose-200">
+              {itemsError}
+            </div>
+          )}
+
+          {itemsMessage && !isLoadingItems && (
+            <div className="mb-4 rounded-2xl border border-emerald-500/40 bg-emerald-500/10 p-4 text-sm text-emerald-200">
+              {itemsMessage}
+            </div>
+          )}
+
+          {!isLoadingItems && ocrItems.length === 0 && !itemsError && (
+            <div className="rounded-2xl border border-slate-800/70 bg-slate-900/70 p-8 text-center text-slate-400">
+              Aktuell liegen keine OCR-Ergebnisse vor. Starte die Pipeline oder lade die Daten neu.
+            </div>
+          )}
+
+          {!isLoadingItems && ocrItems.length > 0 && (
+            <div className="overflow-x-auto">
+              <table className="min-w-full divide-y divide-slate-800 text-left text-sm text-slate-300">
+                <thead>
+                  <tr className="bg-slate-900/80 text-xs uppercase tracking-[0.2em] text-slate-500">
+                    <th className="px-4 py-3">Import</th>
+                    <th className="px-4 py-3">Datum</th>
+                    <th className="px-4 py-3">Name</th>
+                    <th className="px-4 py-3">Kategorie</th>
+                    <th className="px-4 py-3">Preis</th>
+                    <th className="px-4 py-3">Typ</th>
+                    <th className="px-4 py-3">Tag</th>
+                    <th className="px-4 py-3">Status</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-slate-800/70">
+                  {ocrItems.map((item) => (
+                    <tr key={item.id} className="align-top transition-colors duration-150 hover:bg-slate-900/60">
+                      <td className="px-4 py-3">
+                        <input
+                          type="checkbox"
+                          checked={item.include}
+                          onChange={() => handleIncludeToggle(item.id)}
+                          className="h-4 w-4 rounded border-slate-600 bg-slate-900 text-emerald-400 focus:ring-emerald-400"
+                        />
+                      </td>
+                      <td className="px-4 py-3">
+                        <input
+                          type="date"
+                          value={item.dateISO ?? ''}
+                          onChange={(event) => handleItemDateChange(item.id, event.target.value)}
+                          className="w-40 rounded-lg border border-slate-700 bg-slate-900 px-3 py-2 text-sm text-slate-100 focus:border-sky-400 focus:outline-none"
+                        />
+                        {item.dateRaw && (
+                          <p className="mt-1 text-[10px] uppercase tracking-[0.25em] text-slate-500">
+                            Raw: {item.dateRaw}
+                          </p>
+                        )}
+                      </td>
+                      <td className="px-4 py-3">
+                        <input
+                          type="text"
+                          value={item.name}
+                          onChange={(event) => handleItemFieldChange(item.id, 'name', event.target.value)}
+                          className="w-48 rounded-lg border border-slate-700 bg-slate-900 px-3 py-2 text-sm text-slate-100 focus:border-sky-400 focus:outline-none"
+                        />
+                      </td>
+                      <td className="px-4 py-3">
+                        <input
+                          type="text"
+                          value={item.category}
+                          onChange={(event) =>
+                            handleItemFieldChange(item.id, 'category', event.target.value)
+                          }
+                          className="w-44 rounded-lg border border-slate-700 bg-slate-900 px-3 py-2 text-sm text-slate-100 focus:border-sky-400 focus:outline-none"
+                        />
+                      </td>
+                      <td className="px-4 py-3">
+                        <input
+                          type="text"
+                          value={item.priceInput}
+                          placeholder={item.priceRaw || '0,00'}
+                          onChange={(event) => handleItemPriceChange(item.id, event.target.value)}
+                          className="w-28 rounded-lg border border-slate-700 bg-slate-900 px-3 py-2 text-sm text-slate-100 focus:border-sky-400 focus:outline-none"
+                        />
+                        {item.priceRaw && (
+                          <p className="mt-1 text-[10px] uppercase tracking-[0.25em] text-slate-500">
+                            Raw: {item.priceRaw}
+                          </p>
+                        )}
+                      </td>
+                      <td className="px-4 py-3">
+                        <div className="inline-flex overflow-hidden rounded-full border border-slate-700 bg-slate-900">
+                          <button
+                            type="button"
+                            onClick={() => handleItemTypeChange(item.id, 'expense')}
+                            className={`px-3 py-1 text-xs font-semibold uppercase tracking-[0.25em] transition-colors ${
+                              item.type === 'expense'
+                                ? 'bg-rose-500/20 text-rose-200'
+                                : 'text-slate-400 hover:text-rose-200'
+                            }`}
+                          >
+                            Expense
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => handleItemTypeChange(item.id, 'income')}
+                            className={`px-3 py-1 text-xs font-semibold uppercase tracking-[0.25em] transition-colors ${
+                              item.type === 'income'
+                                ? 'bg-emerald-500/20 text-emerald-200'
+                                : 'text-slate-400 hover:text-emerald-200'
+                            }`}
+                          >
+                            Income
+                          </button>
+                        </div>
+                      </td>
+                      <td className="px-4 py-3">
+                        <input
+                          type="text"
+                          value={item.tag}
+                          onChange={(event) => handleItemFieldChange(item.id, 'tag', event.target.value)}
+                          className="w-40 rounded-lg border border-slate-700 bg-slate-900 px-3 py-2 text-sm text-slate-100 focus:border-sky-400 focus:outline-none"
+                        />
+                      </td>
+                      <td className="px-4 py-3">
+                        <span
+                          className={`inline-flex rounded-full px-3 py-1 text-xs font-semibold uppercase tracking-[0.25em] ${
+                            item.status === 'saved'
+                              ? 'border border-emerald-500/40 bg-emerald-500/10 text-emerald-200'
+                              : item.status === 'error'
+                                ? 'border border-rose-500/40 bg-rose-500/10 text-rose-200'
+                                : 'border border-slate-700/60 bg-slate-900/60 text-slate-400'
+                          }`}
+                        >
+                          {item.status === 'saved'
+                            ? 'Gespeichert'
+                            : item.status === 'error'
+                              ? 'Fehler'
+                              : 'Offen'}
+                        </span>
+                        {item.error && (
+                          <p className="mt-1 text-[10px] uppercase tracking-[0.25em] text-rose-300">
+                            {item.error}
+                          </p>
+                        )}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
             </div>
           )}
         </section>
@@ -695,29 +1328,33 @@ export default function ProcessPage() {
                 </div>
               ) : (
                 <ul className="space-y-3">
-                  {selectedStep.logs.map((log, idx) => (
-                    <li
-                      key={`${selectedStep.step.id}-${idx}`}
-                      className="rounded-xl border border-slate-800/60 bg-slate-900/70 p-4"
-                    >
-                      <div className="flex flex-wrap items-center justify-between gap-2 text-[11px] uppercase tracking-[0.35em] text-slate-500">
-                        <span className="font-mono text-slate-400">
-                          {log.timestamp ?? '–'}
-                        </span>
-                        <span className="rounded-full border border-slate-700/60 bg-slate-900/60 px-2 py-0.5 font-semibold text-slate-300">
-                          {log.level}
-                        </span>
-                      </div>
+                  {selectedStep.logs.map((log, idx) => {
+                    const renderedTimestamp = formatTimestamp(log.timestamp);
 
-                      <p className="mt-2 text-sm font-medium text-slate-50">{log.message}</p>
+                    return (
+                      <li
+                        key={`${selectedStep.step.id}-${idx}`}
+                        className="rounded-xl border border-slate-800/60 bg-slate-900/70 p-4"
+                      >
+                        <div className="flex flex-wrap items-center justify-between gap-2 text-[11px] uppercase tracking-[0.35em] text-slate-500">
+                          {renderedTimestamp && (
+                            <span className="font-mono text-slate-400">{renderedTimestamp}</span>
+                          )}
+                          <span className="rounded-full border border-slate-700/60 bg-slate-900/60 px-2 py-0.5 font-semibold text-slate-300">
+                            {log.level}
+                          </span>
+                        </div>
 
-                      {log.data && Object.keys(log.data).length > 0 && (
-                        <pre className="mt-3 overflow-x-auto rounded-lg border border-slate-800 bg-slate-950/80 p-3 text-[11px] leading-relaxed text-slate-300">
-                          {JSON.stringify(log.data, null, 2)}
-                        </pre>
-                      )}
-                    </li>
-                  ))}
+                        <p className="mt-2 text-sm font-medium text-slate-50">{log.message}</p>
+
+                        {log.data && Object.keys(log.data).length > 0 && (
+                          <pre className="mt-3 overflow-x-auto rounded-lg border border-slate-800 bg-slate-950/80 p-3 text-[11px] leading-relaxed text-slate-300">
+                            {JSON.stringify(log.data, null, 2)}
+                          </pre>
+                        )}
+                      </li>
+                    );
+                  })}
                 </ul>
               )}
             </div>

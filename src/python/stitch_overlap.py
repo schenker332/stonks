@@ -6,11 +6,21 @@ import os
 import json
 import sys
 import traceback
+from datetime import datetime
 
-# === LOGGING HELPER ===
-def log(level: str, message: str, **data):
+# === LOGGING HELFER ===
+STEP_NAME = "stitch"
+
+
+def log(level: str, message: str, step: str | None = STEP_NAME, **data):
     """Strukturiertes Logging für SSE Stream."""
-    payload = {"level": level, "message": message}
+    payload = {
+        "level": level,
+        "message": message,
+        "timestamp": datetime.utcnow().isoformat() + "Z",
+    }
+    if step:
+        payload["step"] = step
     if data:
         payload["data"] = data
     print("LOG:", json.dumps(payload, ensure_ascii=False))
@@ -32,9 +42,6 @@ def detect_and_remove_top_border(stitched_path):
     gray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
     height, width = gray.shape
     
-    # Summary: Stitched Bildgröße (für Dashboard)
-    filesize_mb = round(os.path.getsize(stitched_path) / (1024 * 1024), 2)
-    log("summary", "🧩 Zusammengesetztes Bild", width=width, height=height, filesize_mb=filesize_mb)
     
     log("info", "🔍 Erkenne oberen weißen Balken")
     
@@ -62,7 +69,13 @@ def detect_and_remove_top_border(stitched_path):
                 if next_std > line_std + 30:
                     cut_y = y + 1
                     line_mean = np.mean(line)
-                    log("info", "📏 Horizontale Linie erkannt", y=y, brightness=float(line_mean), std=float(line_std))
+                    log(
+                        "info",
+                        "📏 Horizontale Linie erkannt",
+                        y=y,
+                        brightness=float(line_mean),
+                        std=float(line_std),
+                    )
                     break
     
     if cut_y > 0:
@@ -136,14 +149,17 @@ def _stitch_pair(
 
     
     # Alle Infos in einer übersichtlichen Kachel loggen
-    log("info", "🔗 Bild zusammengefügt", 
+    log(
+        "info",
+        "🔗 Bild zusammengefügt",
         match_score=f"{max_val*100:.1f}%",
         match_y=match_y,
         crop_y=crop_start,
         remaining_height=remainder.shape[0],
         debug_template=template_path,
         debug_match=match_path,
-        debug_result=result_path)
+        debug_result=result_path,
+    )
     
     
     # ==================== END DEBUG ====================================

@@ -1,0 +1,618 @@
+[
+  {
+    "name": "Abbuchung",
+    "category": "Sonstige Ausgaben",
+    "price": "-8,00 €",
+    "tag": "",
+    "date": "30.09. Di"
+  },
+  {
+    "name": "MeFit",
+    "category": "Abo",
+    "price": "-24,90 €",
+    "tag": "",
+    "date": "30.09. Di"
+  },
+  {
+    "name": "Bar",
+    "category": "Bar",
+    "price": "-25,00 €",
+    "tag": "",
+    "date": "30.09. Di"
+  },
+  {
+    "name": "Friseur",
+    "category": "Abo",
+    "price": "-20,00 €",
+    "tag": "",
+    "date": "30.09. Di"
+  },
+  {
+    "name": "Edeka",
+    "category": "Supermarkt",
+    "price": "-20,54 €",
+    "tag": "",
+    "date": "30.09. Di"
+  },
+  {
+    "name": "Moritz Rühm",
+    "category": "Veranstaltungen",
+    "price": "-13,50 €",
+    "tag": "",
+    "date": "29.09. Mo"
+  },
+  {
+    "name": "Edeka",
+    "category": "Supermarkt",
+    "price": "-4,47 €",
+    "tag": "",
+    "date": "29.09. Mo"
+  },
+  {
+    "name": "Abbuchung",
+    "category": "Restaurants",
+    "price": "-13,66 €",
+    "tag": "",
+    "date": "28.09. So"
+  },
+  {
+    "name": "Deutsche Bahn",
+    "category": "Bus & Bahn",
+    "price": "-35,99 €",
+    "tag": "",
+    "date": "28.09. So"
+  },
+  {
+    "name": "Decathlon",
+    "category": "Bekleidung",
+    "price": "-45,98 €",
+    "tag": "",
+    "date": "28.09. So"
+  },
+  {
+    "name": "Edeka",
+    "category": "Supermarkt",
+    "price": "-36,99 €",
+    "tag": "",
+    "date": "27.09. Sa"
+  },
+  {
+    "name": "Youtube",
+    "category": "Abo",
+    "price": "-7,49 €",
+    "tag": "",
+    "date": "27.09. Sa"
+  },
+  {
+    "name": "Bird* Temp Hold",
+    "category": "Sharing / Gemietet",
+    "price": "2,50 €",
+    "tag": "",
+    "date": "27.09. Sa"
+  },
+  {
+    "name": "Kyso.cafe",
+    "category": "Bar",
+    "price": "-19,80 €",
+    "tag": "",
+    "date": "27.09. Sa"
+  },
+  {
+    "name": "Edeka",
+    "category": "Supermarkt",
+    "price": "14,64 €",
+    "tag": "",
+    "date": "26.09. Fr"
+  },
+  {
+    "name": "DM",
+    "category": "Drogerie",
+    "price": "-9,70 €",
+    "tag": "",
+    "date": "26.09. Fr"
+  },
+  {
+    "name": "Edeka",
+    "category": "Supermarkt",
+    "price": "-7,52 €",
+    "tag": "",
+    "date": "26.09. Fr"
+  },
+  {
+    "name": "Zalando",
+    "category": "Shopping",
+    "price": "-115,08 €",
+    "tag": "",
+    "date": "25.09. Do"
+  },
+  {
+    "name": "REWE",
+    "category": "Supermarkt",
+    "price": "-14,85 €",
+    "tag": "",
+    "date": "25.09. Do"
+  },
+  {
+    "name": "Alicia Tran",
+    "category": "Restaurants",
+    "price": "-15,00 €",
+    "tag": "",
+    "date": "24.09. Mi"
+  },
+  {
+    "name": "Weekday",
+    "category": "Shopping",
+    "price": "-32,29 €",
+    "tag": "",
+    "date": "24.09. Mi"
+  },
+  {
+    "name": "Apple",
+    "category": "Shopping",
+    "price": "-249,00 €",
+    "tag": "",
+    "date": "24.09. Mi"
+  },
+  {
+    "name": "Edeka",
+    "category": "Supermarkt",
+    "price": "-29,26 €",
+    "tag": "",
+    "date": "24.09. Mi"
+  },
+  {
+    "name": "Privat Baeckerei Wimme",
+    "category": "Lebensmittel",
+    "price": "-2,30 €",
+    "tag": "",
+    "date": "24.09. Mi"
+  },
+  {
+    "name": "Sebastian Kuch",
+    "category": "Veranstaltungen",
+    "price": "-7,00 €",
+    "tag": "",
+    "date": "23.09. Di"
+  },
+  {
+    "name": "REWE",
+    "category": "Supermarkt",
+    "price": "-25,36 €",
+    "tag": "",
+    "date": "22.09.Mo"
+  },
+  {
+    "name": "Foodamigos",
+    "category": "Restaurants",
+    "price": "-17,30 €",
+    "tag": "",
+    "date": "21.09. So"
+  },
+  {
+    "name": "lime",
+    "category": "Sharing / Gemietet",
+    "price": "-3,90 €",
+    "tag": "",
+    "date": "20.09. Sa"
+  },
+  {
+    "name": "Mina Shop",
+    "category": "Lebensmittel",
+    "price": "-9,60 €",
+    "tag": "",
+    "date": "20.09. Sa"
+  },
+  {
+    "name": "Aral",
+    "category": "Supermarkt",
+    "price": "-8,61 €",
+    "tag": "",
+    "date": "20.09. Sa"
+  },
+  {
+    "name": "Bahnwärter Thiel",
+    "category": "Veranstaltungen",
+    "price": "-15,00 €",
+    "tag": "",
+    "date": "20.09. Sa"
+  },
+  {
+    "name": "Bahnwärter Thiel",
+    "category": "Veranstaltungen",
+    "price": "-7,00 €",
+    "tag": "",
+    "date": "20.09. Sa"
+  },
+  {
+    "name": "Ballabeni Icecream",
+    "category": "Supermarkt",
+    "price": "-7,80 €",
+    "tag": "",
+    "date": "19.09. Fr"
+  },
+  {
+    "name": "Edeka",
+    "category": "Supermarkt",
+    "price": "-13,05 €",
+    "tag": "",
+    "date": "19.09. Fr"
+  },
+  {
+    "name": "Nils Koch",
+    "category": "Geschenke",
+    "price": "-7,57 €",
+    "tag": "",
+    "date": "18.09. Do"
+  },
+  {
+    "name": "Deutsche Bahn",
+    "category": "Bus & Bahn",
+    "price": "-7,00 €",
+    "tag": "",
+    "date": "18.09. Do"
+  },
+  {
+    "name": "Baeckerei Mitterer",
+    "category": "Lebensmittel",
+    "price": "-5,90 €",
+    "tag": "",
+    "date": "18.09. Do"
+  },
+  {
+    "name": "Media Markt",
+    "category": "Elektrohandel",
+    "price": "-18,90 €",
+    "tag": "",
+    "date": "18.09. Do"
+  },
+  {
+    "name": "Oebb",
+    "category": "Sonstige Ausgaben",
+    "price": "-0,50 €",
+    "tag": "",
+    "date": "18.09. Do"
+  },
+  {
+    "name": "Edeka",
+    "category": "Supermarkt",
+    "price": "-15,45 €",
+    "tag": "",
+    "date": "17.09. Mi"
+  },
+  {
+    "name": "Irene Cajaraville Souto",
+    "category": "Restaurants",
+    "price": "-14,00 €",
+    "tag": "",
+    "date": "16.09. Di"
+  },
+  {
+    "name": "REWE",
+    "category": "Supermarkt",
+    "price": "2,79 €",
+    "tag": "",
+    "date": "16.09. Di"
+  },
+  {
+    "name": "Be",
+    "category": "Fahrrad",
+    "price": "-108,94 €",
+    "tag": "",
+    "date": "15.09. Mo"
+  },
+  {
+    "name": "lime",
+    "category": "Sharing / Gemietet",
+    "price": "-1,89 €",
+    "tag": "",
+    "date": "15.09. Mo"
+  },
+  {
+    "name": "Abbuchung",
+    "category": "Restaurants",
+    "price": "-4,00 €",
+    "tag": "",
+    "date": "15.09. Mo"
+  },
+  {
+    "name": "Amazon",
+    "category": "Shopping",
+    "price": "-6,79 €",
+    "tag": "",
+    "date": "15.09. Mo"
+  },
+  {
+    "name": "Sonstiges",
+    "category": "Sonstige Ausgaben",
+    "price": "-19,00 €",
+    "tag": "",
+    "date": "15.09. Mo"
+  },
+  {
+    "name": "Edeka",
+    "category": "Supermarkt",
+    "price": "-8,77 €",
+    "tag": "",
+    "date": "15.09. Mo"
+  },
+  {
+    "name": "Edeka",
+    "category": "Supermarkt",
+    "price": "-17,32 €",
+    "tag": "",
+    "date": "15.09. Mo"
+  },
+  {
+    "name": "Mvg",
+    "category": "Fahrrad",
+    "price": "-1,62 €",
+    "tag": "",
+    "date": "14.09. So"
+  },
+  {
+    "name": "Mamma Bao",
+    "category": "Restaurants",
+    "price": "-80,89 €",
+    "tag": "",
+    "date": "14.09. So"
+  },
+  {
+    "name": "Friseur",
+    "category": "Abo",
+    "price": "-18,00 €",
+    "tag": "",
+    "date": "13.09. Sa"
+  },
+  {
+    "name": "Edeka",
+    "category": "Supermarkt",
+    "price": "-2,79€",
+    "tag": "",
+    "date": "13.09. Sa"
+  },
+  {
+    "name": "Edeka",
+    "category": "Supermarkt",
+    "price": "-13,50 €",
+    "tag": "",
+    "date": "13.09. Sa"
+  },
+  {
+    "name": "Up Coffee",
+    "category": "Restaurants",
+    "price": "-3,80 €",
+    "tag": "",
+    "date": "13.09. Sa"
+  },
+  {
+    "name": "Lidl",
+    "category": "Supermarkt",
+    "price": "-21,29 €",
+    "tag": "",
+    "date": "12.09. Fr"
+  },
+  {
+    "name": "REWE",
+    "category": "Supermarkt",
+    "price": "-4,43 €",
+    "tag": "",
+    "date": "12.09. Fr"
+  },
+  {
+    "name": "Ls Alrighty",
+    "category": "Bar",
+    "price": "-8,00 €",
+    "tag": "",
+    "date": "12.09. Fr"
+  },
+  {
+    "name": "Studierendenwerk München Oberbay...",
+    "category": "Mensa",
+    "price": "-10,00 €",
+    "tag": "",
+    "date": "11.09. Do"
+  },
+  {
+    "name": "Amazon Instant Video",
+    "category": "Abo",
+    "price": "-2,99 €",
+    "tag": "",
+    "date": "11.09. Do"
+  },
+  {
+    "name": "REWE",
+    "category": "Supermarkt",
+    "price": "-2,98 €",
+    "tag": "",
+    "date": "11.09. Do"
+  },
+  {
+    "name": "Edeka",
+    "category": "Supermarkt",
+    "price": "-8,47 €",
+    "tag": "",
+    "date": "11.09. Do"
+  },
+  {
+    "name": "Mensa",
+    "category": "Mensa",
+    "price": "-20,00 €",
+    "tag": "",
+    "date": "10.09. Mi"
+  },
+  {
+    "name": "REWE",
+    "category": "Supermarkt",
+    "price": "-3,81€",
+    "tag": "",
+    "date": "10.09. Mi"
+  },
+  {
+    "name": "Edeka",
+    "category": "Supermarkt",
+    "price": "22,52€",
+    "tag": "",
+    "date": "10.09. Mi"
+  },
+  {
+    "name": "Deutsche Bahn",
+    "category": "Bus & Bahn",
+    "price": "-7,00 €",
+    "tag": "",
+    "date": "09.09. Di"
+  },
+  {
+    "name": "Schiller Chiemsee",
+    "category": "Restaurants",
+    "price": "-24,00 €",
+    "tag": "",
+    "date": "09.09. Di"
+  },
+  {
+    "name": "REWE",
+    "category": "Supermarkt",
+    "price": "-19,70 €",
+    "tag": "",
+    "date": "08.09. Mo"
+  },
+  {
+    "name": "REWE",
+    "category": "Supermarkt",
+    "price": "-4,28 €",
+    "tag": "",
+    "date": "08.09. Mo"
+  },
+  {
+    "name": "Der Verrueckte",
+    "category": "Bar",
+    "price": "-9,30 €",
+    "tag": "",
+    "date": "07.09. So"
+  },
+  {
+    "name": "R2 Handels",
+    "category": "Fahrrad",
+    "price": "-166,35 €",
+    "tag": "",
+    "date": "06.09. Sa"
+  },
+  {
+    "name": "Dplay Entertainment",
+    "category": "Abo",
+    "price": "-4,99 €",
+    "tag": "",
+    "date": "06.09. Sa"
+  },
+  {
+    "name": "fraenk",
+    "category": "Mobilfunk",
+    "price": "-10,00 €",
+    "tag": "",
+    "date": "06.09. Sa"
+  },
+  {
+    "name": "Edeka",
+    "category": "Supermarkt",
+    "price": "-17,10 €",
+    "tag": "",
+    "date": "06.09. Sa"
+  },
+  {
+    "name": "Spotify",
+    "category": "Musik & Podcasts",
+    "price": "-5,99 €",
+    "tag": "",
+    "date": "06.09. Sa"
+  },
+  {
+    "name": "Edeka",
+    "category": "Supermarkt",
+    "price": "-20,02 €",
+    "tag": "",
+    "date": "06.09. Sa"
+  },
+  {
+    "name": "Nbl",
+    "category": "Restaurants",
+    "price": "-8,50 €",
+    "tag": "Balkan Express",
+    "date": "06.09. Sa"
+  },
+  {
+    "name": "Amazon",
+    "category": "Abo",
+    "price": "-4,49 €",
+    "tag": "",
+    "date": "05.09. Fr"
+  },
+  {
+    "name": "Market Dolsko",
+    "category": "Supermarkt",
+    "price": "-40,13 €",
+    "tag": "Balkan Express",
+    "date": "05.09. Fr"
+  },
+  {
+    "name": "Market Dolsko",
+    "category": "Supermarkt",
+    "price": "-17,76 €",
+    "tag": "Balkan Express",
+    "date": "04.09. Do"
+  },
+  {
+    "name": "Deutsche Bahn",
+    "category": "Bus & Bahn",
+    "price": "-35,96 €",
+    "tag": "Balkan Express",
+    "date": "03.09. Mi"
+  },
+  {
+    "name": "Market Iga Vas",
+    "category": "Supermarkt",
+    "price": "-24,93 €",
+    "tag": "Balkan Express",
+    "date": "03.09. Mi"
+  },
+  {
+    "name": "Fast Food Royal Food",
+    "category": "Restaurants",
+    "price": "-40,60 €",
+    "tag": "Balkan Express",
+    "date": "02.09. Di"
+  },
+  {
+    "name": "Kroatis",
+    "category": "Supermarkt",
+    "price": "-11,85 €",
+    "tag": "Balkan Express",
+    "date": "02.09. Di"
+  },
+  {
+    "name": "Konzum",
+    "category": "Supermarkt",
+    "price": "-1,39 €",
+    "tag": "Balkan Express",
+    "date": "02.09. Di"
+  },
+  {
+    "name": "Felix Durchdewald",
+    "category": "Miete",
+    "price": "-709,83 €",
+    "tag": "",
+    "date": "01.09. Mo"
+  },
+  {
+    "name": "Plodine Supermarket",
+    "category": "Supermarkt",
+    "price": "-47,61 €",
+    "tag": "Balkan Express",
+    "date": "01.09. Mo"
+  },
+  {
+    "name": "Ina Jablanac",
+    "category": "Supermarkt",
+    "price": "-8,16 €",
+    "tag": "Balkan Express",
+    "date": "01.09. Mo"
+  }
+]
