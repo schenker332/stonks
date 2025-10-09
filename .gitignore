@@ -70,3 +70,4 @@ env/
 
 # Pipeline Logs
 data/process-log.jsonl
+data/ocr_latest.json
