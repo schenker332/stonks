@@ -1,4 +1,4 @@
-// src/components/TransactionManager.tsx
+// src/components/dashboard/TransactionManager.tsx
 'use client';
 
 import { useState, useEffect } from 'react';

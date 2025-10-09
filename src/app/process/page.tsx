@@ -2,7 +2,7 @@
 
 import { Fragment, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { ProcessSummary } from '@/components/ProcessSummary';
+import { ProcessSummary } from '@/components/process/ProcessSummary';
 
 type StepId = 'capture' | 'stitch' | 'ocr';
 
@@ -805,6 +805,10 @@ export default function ProcessPage() {
     setFetchError(null);
     setLogs([]);
     setIsRunning(true);
+    setItemsError(null);
+    setItemsMessage(null);
+    setOcrItems([]);
+    setIsLoadingItems(true);
 
     const eventSource = new EventSource('/api/process');
     eventSourceRef.current = eventSource;
@@ -838,6 +842,7 @@ export default function ProcessPage() {
     eventSource.onerror = () => {
       setFetchError('SSE-Verbindung unterbrochen');
       setIsRunning(false);
+      setIsLoadingItems(false);
       closeEventSource();
     };
   }, [closeEventSource, isRunning, loadLatestLogs, loadOcrItems]);
@@ -861,8 +866,6 @@ export default function ProcessPage() {
   );
 
   const hasErrors = pipelineState.hasErrors || stepCards.some((card) => card.status === 'error');
-  const pipelineFinished = pipelineState.pipelineFinished && !isRunning;
-
   const headerStatus = (() => {
     if (isRunning) {
       return {
@@ -908,12 +911,8 @@ export default function ProcessPage() {
                 Pipeline Control
               </p>
               <h1 className="mt-2 text-3xl font-semibold text-[#2c1f54]">
-                🛠️ Process Monitor
+                Process Monitor
               </h1>
-              <p className="mt-3 max-w-xl text-sm text-[#5a4a80]">
-                Greife auf die gespeicherten JSON-Logs der Python-Pipeline zu, starte neue
-                Durchläufe manuell und inspiziere die Schritte einzeln – jetzt im hellen Lila-Theme.
-              </p>
             </div>
 
             <div className="flex flex-wrap items-center gap-3 text-xs text-[#7f6ab7]">
@@ -951,7 +950,7 @@ export default function ProcessPage() {
                     : 'border-emerald-300 bg-emerald-100 text-emerald-700 hover:border-emerald-400 hover:bg-emerald-200 hover:text-emerald-800'
                 }`}
               >
-                🚀 OCR manuell starten
+                🚀 OCR starten
               </button>
 
               <button
@@ -959,7 +958,7 @@ export default function ProcessPage() {
                 onClick={() => router.push('/')}
                 className="rounded-full border border-[#d9cfff] bg-white/80 px-5 py-2 text-xs font-semibold uppercase tracking-[0.35em] text-[#4d3684] transition-colors duration-300 hover:border-[#c897f6] hover:bg-[#f5edff]"
               >
-                🏠 Zum Dashboard
+                🏠 Dashboard
               </button>
             </div>
           </div>

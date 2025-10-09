@@ -10,10 +10,6 @@ export function OcrSection() {
       <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
         <div>
           <h2 className="text-lg font-semibold text-[#341b64]">⚙️ Process</h2>
-          <p className="text-sm text-[#6d5a94]">
-            Öffne die Process-Seite, um die Pipeline-Schritte einzusehen, Logs zu prüfen und
-            manuell neue OCR-Läufe zu starten.
-          </p>
         </div>
 
         <button

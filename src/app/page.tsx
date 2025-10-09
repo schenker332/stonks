@@ -1,6 +1,6 @@
 // src/app/page.tsx
 
-import { TransactionManager } from '../components/TransactionManager';
+import { TransactionManager } from '@/components/dashboard/TransactionManager';
 
 
 export default function DashboardPage() {
@@ -14,10 +14,6 @@ export default function DashboardPage() {
           <h1 className="mt-2 text-4xl font-semibold text-[#2c1f54]">
             Transaktionen verwalten
           </h1>
-          <p className="mt-3 max-w-2xl text-sm text-[#5a4a80]">
-            Erfasse neue Buchungen, importiere Daten über die OCR-Pipeline und halte
-            deine Finanzen übersichtlich im Blick – jetzt in einem hellen, lila-weißen Look.
-          </p>
         </header>
 
         <TransactionManager />
@@ -25,5 +21,4 @@ export default function DashboardPage() {
     </main>
   );
 }
-
 
