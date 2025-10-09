@@ -2,7 +2,6 @@
 
 import { Fragment, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { ProcessSummary } from '@/components/process/ProcessSummary';
 
 type StepId = 'capture' | 'stitch' | 'ocr';
 
@@ -31,6 +30,15 @@ type BoxDetail = {
   h: number;
 };
 
+type OcrSummaryItem = {
+  index: number;
+  name: string;
+  category: string;
+  price: string;
+  tag: string;
+  type?: 'income' | 'expense';
+};
+
 type SummaryData = {
   window?: { x: number; y: number; width: number; height: number };
   stitched?: {
@@ -45,6 +53,7 @@ type SummaryData = {
     firstDate?: string;
     firstDateFound?: boolean;
     resultImageUrl?: string;
+    items?: OcrSummaryItem[];
   };
 };
 
@@ -89,7 +98,7 @@ const STEP_CONFIGS: StepConfig[] = [
   {
     id: 'capture',
     title: 'Screenshots aufnehmen & croppen',
-    description: 'capture_and_crop_screenshots() sammelt die Scroll-Sequenz und schneidet sie zu.',
+    description: '', 
     icon: '📸',
     matchers: [
       /capture/i,
@@ -106,7 +115,7 @@ const STEP_CONFIGS: StepConfig[] = [
   {
     id: 'stitch',
     title: 'Scroll-Sequenz zusammenfügen',
-    description: 'stitch_scroll_sequence() baut die Crops zu einem langen Bild zusammen.',
+    description: '',
     icon: '🧵',
     matchers: [
       /stitch/i,
@@ -121,7 +130,7 @@ const STEP_CONFIGS: StepConfig[] = [
   {
     id: 'ocr',
     title: 'OCR & Analyse',
-    description: 'ocr_extract() erkennt Transaktionen und erstellt das Ergebnis.',
+    description: '',
     icon: '🧠',
     matchers: [
       /ocr/i,
@@ -466,6 +475,48 @@ function buildSummaryData(logs: LogEntry[]): SummaryData {
           firstDate,
           firstDateFound: Boolean(firstDate),
         };
+      } else if (log.message.startsWith('📝 Item ')) {
+        const existing = next.ocr ?? {};
+        const parsedIndex =
+          typeof log.message === 'string'
+            ? Number.parseInt(log.message.replace(/\D+/g, ''), 10)
+            : Number.NaN;
+        const index = Number.isFinite(parsedIndex)
+          ? parsedIndex
+          : (existing.items?.length ?? 0) + 1;
+
+        const nameRaw = data?.name;
+        const categoryRaw = data?.category;
+        const tagRaw = data?.tag;
+        const priceRaw = data?.price;
+        const typeRaw = data?.type;
+
+        const name = typeof nameRaw === 'string' ? nameRaw.trim() : '';
+        const category = typeof categoryRaw === 'string' ? categoryRaw.trim() : '';
+        const tag = typeof tagRaw === 'string' ? tagRaw.trim() : '';
+        const price = typeof priceRaw === 'string' ? priceRaw.trim() : '';
+        const type =
+          typeRaw === 'income' || typeRaw === 'expense' ? typeRaw : undefined;
+
+        const dedupedItems = (existing.items ?? []).filter(
+          (item) => item.index !== index,
+        );
+
+        dedupedItems.push({
+          index,
+          name,
+          category,
+          price,
+          tag,
+          type,
+        });
+
+        dedupedItems.sort((a, b) => a.index - b.index);
+
+        next.ocr = {
+          ...existing,
+          items: dedupedItems,
+        };
       } else if (log.message === '✅ OCR Pipeline abgeschlossen') {
         const ts = Date.now();
         const resultImageUrl = `/api/process/media/ocr_result.png?ts=${ts}`;
@@ -583,11 +634,19 @@ export default function ProcessPage() {
   const [itemsMessage, setItemsMessage] = useState<string | null>(null);
   const [isImporting, setIsImporting] = useState(false);
   const [itemsYear, setItemsYear] = useState(() => new Date().getFullYear());
+  const [isOcrPreviewOpen, setIsOcrPreviewOpen] = useState(false);
+  const [ocrPreviewZoom, setOcrPreviewZoom] = useState(1);
 
   const itemsYearRef = useRef(itemsYear);
   useEffect(() => {
     itemsYearRef.current = itemsYear;
   }, [itemsYear]);
+
+  useEffect(() => {
+    if (isOcrPreviewOpen) {
+      setOcrPreviewZoom(1);
+    }
+  }, [isOcrPreviewOpen]);
 
   const loadOcrItems = useCallback(async () => {
     setIsLoadingItems(true);
@@ -860,6 +919,17 @@ export default function ProcessPage() {
     [pipelineState.grouped, pipelineState.statusByStep],
   );
 
+  const ocrSummary = pipelineState.summaryData.ocr;
+  const ocrTotalItems =
+    typeof ocrSummary?.totalItems === 'number'
+      ? ocrSummary.totalItems
+      : ocrSummary?.items?.length ?? null;
+  const ocrFirstDate =
+    ocrSummary?.firstDateFound === false
+      ? 'nicht erkannt'
+      : ocrSummary?.firstDate || (ocrSummary?.firstDateFound ? '—' : null);
+  const hasOcrImage = Boolean(ocrSummary?.resultImageUrl);
+
   const selectedStep = useMemo(
     () => stepCards.find((card) => card.step.id === selectedStepId) ?? null,
     [selectedStepId, stepCards],
@@ -928,6 +998,38 @@ export default function ProcessPage() {
                 {fetchError}
               </div>
             )}
+
+            {ocrSummary && (
+              <div className="space-y-4">
+                <div className="grid gap-3 sm:grid-cols-3">
+                  <div className="rounded-xl border border-[#e6dcff] bg-white/90 p-4">
+                    <p className="text-[10px] uppercase tracking-[0.35em] text-[#9a8acc]">
+                      erkannte einträge
+                    </p>
+                    <p className="mt-2 text-2xl font-semibold text-[#4d3684]">
+                      {ocrTotalItems ?? '—'}
+                    </p>
+                  </div>
+                  <div className="rounded-xl border border-[#e6dcff] bg-white/90 p-4">
+                    <p className="text-[10px] uppercase tracking-[0.35em] text-[#9a8acc]">
+                      erstes datum
+                    </p>
+                    <p className="mt-2 font-mono text-sm text-[#4d3684]">
+                      {ocrFirstDate ?? '—'}
+                    </p>
+                  </div>
+                </div>
+                {hasOcrImage && (
+                  <button
+                    type="button"
+                    onClick={() => setIsOcrPreviewOpen(true)}
+                    className="w-full rounded-lg border border-[#d3a5f8] bg-[#d3a5f8]/20 px-5 py-2 text-xs font-semibold uppercase tracking-[0.35em] text-[#3d2666] transition-colors duration-300 hover:border-[#c897f6] hover:bg-[#d3a5f8]/35"
+                  >
+                    OCR Ergebnisbild ansehen
+                  </button>
+                )}
+              </div>
+            )}
           </div>
 
           <div className="flex flex-col gap-3 sm:items-end">
@@ -963,19 +1065,8 @@ export default function ProcessPage() {
             </div>
           </div>
         </header>
-
         <section className="rounded-3xl border border-[#e6dcff] bg-white/85 p-6 shadow-[0_25px_70px_rgba(203,179,255,0.2)]">
           <div className="mb-10 flex flex-wrap items-center justify-between gap-3">
-            <div>
-              <h2 className="text-xl font-semibold text-[#2c1f54]">Pipeline Schritte</h2>
-              <p className="text-sm text-[#5a4a80]">
-                Die drei Hauptphasen der Pipeline nutzen die gespeicherten Logs aus{' '}
-                <code className="rounded bg-[#ede3ff] px-1 py-0.5 text-[11px] text-[#4d3684]">
-                  data/process-log.jsonl
-                </code>
-                . Tippe auf eine Karte, um alle Einträge zu sehen.
-              </p>
-            </div>
             {isLoading && (
               <span className="rounded-full border border-[#d9cfff] bg-white px-3 py-1 text-xs uppercase tracking-[0.35em] text-[#7f6ab7]">
                 Lädt…
@@ -1092,16 +1183,11 @@ export default function ProcessPage() {
           <div className="mb-6 flex flex-wrap items-center justify-between gap-4">
             <div>
               <h2 className="text-xl font-semibold text-[#2c1f54]">OCR Ergebnisse prüfen</h2>
-              <p className="text-sm text-[#5a4a80]">
-                Überprüfe die erkannten Transaktionen, passe sie bei Bedarf an und übernimm sie
-                erst danach in die Datenbank.
-              </p>
             </div>
 
             <div className="flex flex-wrap items-end gap-4">
               <div className="flex items-end gap-2">
                 <label className="flex flex-col text-xs uppercase tracking-[0.35em] text-[#7f6ab7]">
-                  Jahr für Datumszuordnung
                   <input
                     type="number"
                     value={itemsYear}
@@ -1111,13 +1197,6 @@ export default function ProcessPage() {
                     className="mt-2 w-24 rounded-lg border border-[#d9cfff] bg-white px-3 py-2 text-sm text-[#2c1f54] focus:border-[#c89bf6] focus:outline-none focus:ring-2 focus:ring-[#d3a5f8]/40"
                   />
                 </label>
-                <button
-                  type="button"
-                  onClick={loadOcrItems}
-                  className="h-10 rounded-full border border-[#d9cfff] bg-white/80 px-4 text-xs font-semibold uppercase tracking-[0.3em] text-[#4d3684] transition-colors duration-300 hover:border-[#c897f6] hover:bg-[#f5edff]"
-                >
-                  🔄 Neu laden
-                </button>
               </div>
 
               <button
@@ -1182,7 +1261,7 @@ export default function ProcessPage() {
                           type="checkbox"
                           checked={item.include}
                           onChange={() => handleIncludeToggle(item.id)}
-                          className="h-4 w-4 rounded border-[#d9cfff] bg-white text-emerald-500 focus:ring-emerald-300"
+                          className="h-5 w-5 rounded-md border-2 border-[#d9cfff] bg-white text-[#7f6ab7] accent-[#d3a5f8] shadow-[0_4px_12px_rgba(203,179,255,0.25)] transition-colors duration-200 focus:border-[#c897f6] focus:outline-none focus:ring-2 focus:ring-[#d3a5f8]/40"
                         />
                       </td>
                       <td className="px-4 py-3">
@@ -1294,7 +1373,6 @@ export default function ProcessPage() {
           )}
         </section>
 
-        <ProcessSummary summaryData={pipelineState.summaryData} />
       </div>
 
       {selectedStep && (
@@ -1355,6 +1433,87 @@ export default function ProcessPage() {
                   })}
                 </ul>
               )}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {isOcrPreviewOpen && ocrSummary?.resultImageUrl && (
+        <div
+          className="fixed inset-0 z-[60] flex items-center justify-center bg-[#1b1038]/80 p-6 backdrop-blur-sm"
+          onClick={() => setIsOcrPreviewOpen(false)}
+        >
+          <div
+            className="relative w-full max-w-5xl rounded-3xl border border-[#e6dcff] bg-white p-6 shadow-[0_30px_90px_rgba(206,185,255,0.35)]"
+            onClick={(event) => event.stopPropagation()}
+          >
+            <button
+              type="button"
+              onClick={() => setIsOcrPreviewOpen(false)}
+              className="absolute right-4 top-4 rounded-full border border-[#e6dcff] bg-white/80 px-3 py-1 text-xs font-semibold uppercase tracking-[0.35em] text-[#4d3684] transition-colors duration-300 hover:border-[#d3a5f8] hover:bg-[#f5edff]"
+            >
+              Schließen
+            </button>
+
+            <h3 className="text-lg font-semibold text-[#2c1f54]">OCR Ergebnis</h3>
+
+            <div className="mt-6 max-h-[70vh] overflow-auto rounded-2xl border border-[#e6dcff] bg-[#f7f2ff] p-4">
+              <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
+                <span className="font-mono text-xs text-[#6c5a94]">
+                  Zoom: {Math.round(ocrPreviewZoom * 100)}%
+                </span>
+                <div className="flex items-center gap-2">
+                  <button
+                    type="button"
+                    onClick={() =>
+                      setOcrPreviewZoom((prev) =>
+                        Math.max(0.25, Number((prev - 0.25).toFixed(2))),
+                      )
+                    }
+                    className="rounded-lg border border-[#e6dcff] bg-white/80 px-3 py-1 text-xs font-semibold uppercase tracking-[0.25em] text-[#4d3684] transition-colors duration-300 hover:border-[#c897f6] hover:bg-[#f5edff]"
+                    disabled={ocrPreviewZoom <= 0.25}
+                  >
+                    −
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setOcrPreviewZoom(1)}
+                    className="rounded-lg border border-[#e6dcff] bg-white/80 px-3 py-1 text-xs font-semibold uppercase tracking-[0.25em] text-[#4d3684] transition-colors duration-300 hover:border-[#c897f6] hover:bg-[#f5edff]"
+                  >
+                    100%
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() =>
+                      setOcrPreviewZoom((prev) =>
+                        Math.min(4, Number((prev + 0.25).toFixed(2))),
+                      )
+                    }
+                    className="rounded-lg border border-[#e6dcff] bg-white/80 px-3 py-1 text-xs font-semibold uppercase tracking-[0.25em] text-[#4d3684] transition-colors duration-300 hover:border-[#c897f6] hover:bg-[#f5edff]"
+                    disabled={ocrPreviewZoom >= 4}
+                  >
+                    +
+                  </button>
+                </div>
+              </div>
+
+              <div className="flex justify-center rounded-xl border border-[#e6dcff] bg-white/90 p-4">
+                <div
+                  className="inline-block"
+                  style={{
+                    transform: `scale(${ocrPreviewZoom})`,
+                    transformOrigin: 'top center',
+                  }}
+                >
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  <img
+                    src={ocrSummary.resultImageUrl}
+                    alt="OCR Ergebnis"
+                    className="block"
+                    loading="lazy"
+                  />
+                </div>
+              </div>
             </div>
           </div>
         </div>
