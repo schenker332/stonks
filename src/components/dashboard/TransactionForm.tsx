@@ -57,9 +57,6 @@ export function TransactionForm({ onTransactionAdded }: TransactionFormProps) {
         <h2 className="text-lg font-semibold text-[#341b64]">
           ➕ Manuell hinzufügen
         </h2>
-        <p className="text-sm text-[#6d5a94]">
-          Ergänze individuelle Buchungen mit wenigen Klicks.
-        </p>
       </div>
 
       <form onSubmit={handleAdd} className="mb-6 grid grid-cols-1 gap-3 md:grid-cols-6">

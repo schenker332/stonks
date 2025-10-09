@@ -1,7 +1,12 @@
 'use client';
 
-import { Fragment, useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useRouter } from 'next/navigation';
+import { ProcessMonitorHeader } from '@/components/process/ProcessMonitorHeader';
+import { ProcessPipelineSteps } from '@/components/process/ProcessPipelineSteps';
+import { ProcessStepLogsModal } from '@/components/process/ProcessStepLogsModal';
+import { ProcessOcrItemsPanel } from '@/components/process/ProcessOcrItemsPanel';
+import { ProcessOcrPreviewModal } from '@/components/process/ProcessOcrPreviewModal';
 
 type StepId = 'capture' | 'stitch' | 'ocr';
 
@@ -74,13 +79,10 @@ type RawOcrItem = {
   date?: string;
 };
 
-type EditableOcrItemStatus = 'pending' | 'saved' | 'error';
-
 type EditableOcrItem = {
   id: string;
   index: number;
   include: boolean;
-  status: EditableOcrItemStatus;
   error?: string;
   name: string;
   category: string;
@@ -278,7 +280,6 @@ function buildEditableItems(rawItems: RawOcrItem[], year: number): EditableOcrIt
       id: generateItemId(index),
       index,
       include: true,
-      status: 'pending',
       error: undefined,
       name: (item.name ?? '').trim(),
       category: (item.category ?? '').trim(),
@@ -682,7 +683,7 @@ export default function ProcessPage() {
       prev.map((item) => {
         if (item.id !== id) return item;
         const next = updater(item);
-        return { ...next, status: 'pending', error: undefined };
+        return { ...next, error: undefined };
       }),
     );
   }, []);
@@ -799,7 +800,6 @@ export default function ProcessPage() {
           importedIds.has(item.id)
             ? {
                 ...item,
-                status: 'saved',
                 include: false,
               }
             : item,
@@ -920,15 +920,6 @@ export default function ProcessPage() {
   );
 
   const ocrSummary = pipelineState.summaryData.ocr;
-  const ocrTotalItems =
-    typeof ocrSummary?.totalItems === 'number'
-      ? ocrSummary.totalItems
-      : ocrSummary?.items?.length ?? null;
-  const ocrFirstDate =
-    ocrSummary?.firstDateFound === false
-      ? 'nicht erkannt'
-      : ocrSummary?.firstDate || (ocrSummary?.firstDateFound ? '—' : null);
-  const hasOcrImage = Boolean(ocrSummary?.resultImageUrl);
 
   const selectedStep = useMemo(
     () => stepCards.find((card) => card.step.id === selectedStepId) ?? null,
@@ -974,550 +965,61 @@ export default function ProcessPage() {
   return (
     <main className="min-h-screen bg-[#f9f7ff] py-12 px-6 text-[#21183c]">
       <div className="mx-auto flex w-full max-w-5xl flex-col gap-10">
-        <header className="flex flex-col gap-6 rounded-3xl border border-[#e6dcff] bg-white/85 p-6 shadow-[0_25px_70px_rgba(203,179,255,0.25)] sm:flex-row sm:items-center sm:justify-between">
-          <div className="space-y-4">
-            <div>
-              <p className="text-xs uppercase tracking-[0.35em] text-[#a17bdc]">
-                Pipeline Control
-              </p>
-              <h1 className="mt-2 text-3xl font-semibold text-[#2c1f54]">
-                Process Monitor
-              </h1>
-            </div>
+        <ProcessMonitorHeader
+          formattedLastAdded={formattedLastAdded}
+          fetchError={fetchError}
+          ocrSummary={ocrSummary}
+          onOpenOcrPreview={() => setIsOcrPreviewOpen(true)}
+          onStartPipeline={handleStartPipeline}
+          onNavigateDashboard={() => router.push('/')}
+          isPipelineRunning={isRunning}
+          headerStatus={headerStatus}
+        />
+        <ProcessPipelineSteps
+          isLoading={isLoading}
+          stepCards={stepCards}
+          statusLabels={STATUS_LABEL}
+          statusStyles={STATUS_STYLES}
+          onSelectStep={setSelectedStepId}
+        />
 
-            <div className="flex flex-wrap items-center gap-3 text-xs text-[#7f6ab7]">
-              {formattedLastAdded && (
-                <span className="rounded-full border border-[#d9cfff] bg-white px-3 py-1 font-mono tracking-widest text-[#4d3684]">
-                  Zuletzt hinzugefügt: {formattedLastAdded}
-                </span>
-              )}
-            </div>
-
-            {fetchError && (
-              <div className="rounded-xl border border-rose-200 bg-rose-50 p-4 text-sm text-rose-700">
-                {fetchError}
-              </div>
-            )}
-
-            {ocrSummary && (
-              <div className="space-y-4">
-                <div className="grid gap-3 sm:grid-cols-3">
-                  <div className="rounded-xl border border-[#e6dcff] bg-white/90 p-4">
-                    <p className="text-[10px] uppercase tracking-[0.35em] text-[#9a8acc]">
-                      erkannte einträge
-                    </p>
-                    <p className="mt-2 text-2xl font-semibold text-[#4d3684]">
-                      {ocrTotalItems ?? '—'}
-                    </p>
-                  </div>
-                  <div className="rounded-xl border border-[#e6dcff] bg-white/90 p-4">
-                    <p className="text-[10px] uppercase tracking-[0.35em] text-[#9a8acc]">
-                      erstes datum
-                    </p>
-                    <p className="mt-2 font-mono text-sm text-[#4d3684]">
-                      {ocrFirstDate ?? '—'}
-                    </p>
-                  </div>
-                </div>
-                {hasOcrImage && (
-                  <button
-                    type="button"
-                    onClick={() => setIsOcrPreviewOpen(true)}
-                    className="w-full rounded-lg border border-[#d3a5f8] bg-[#d3a5f8]/20 px-5 py-2 text-xs font-semibold uppercase tracking-[0.35em] text-[#3d2666] transition-colors duration-300 hover:border-[#c897f6] hover:bg-[#d3a5f8]/35"
-                  >
-                    OCR Ergebnisbild ansehen
-                  </button>
-                )}
-              </div>
-            )}
+        {!isLoading && logs.length === 0 && (
+          <div className="rounded-3xl border border-[#e6dcff] bg-white p-8 text-center text-[#7f6ab7] shadow-[0_25px_70px_rgba(203,179,255,0.15)]">
+            Noch keine Logs vorhanden. Starte die Pipeline, um neue Einträge zu erzeugen.
           </div>
-
-          <div className="flex flex-col gap-3 sm:items-end">
-            {headerStatus && (
-              <div
-                className={`flex items-center gap-2 rounded-full border px-5 py-2 text-xs font-semibold uppercase tracking-[0.35em] transition-colors duration-300 ${headerStatus.className}`}
-              >
-                <span>{headerStatus.label}</span>
-              </div>
-            )}
-
-            <div className="flex flex-wrap justify-end gap-2">
-              <button
-                type="button"
-                onClick={handleStartPipeline}
-                disabled={isRunning}
-                className={`rounded-full border px-5 py-2 text-xs font-semibold uppercase tracking-[0.35em] transition-colors duration-300 ${
-                  isRunning
-                    ? 'cursor-not-allowed border-[#d9cfff] bg-white text-[#b4a5dd]'
-                    : 'border-emerald-300 bg-emerald-100 text-emerald-700 hover:border-emerald-400 hover:bg-emerald-200 hover:text-emerald-800'
-                }`}
-              >
-                🚀 OCR starten
-              </button>
-
-              <button
-                type="button"
-                onClick={() => router.push('/')}
-                className="rounded-full border border-[#d9cfff] bg-white/80 px-5 py-2 text-xs font-semibold uppercase tracking-[0.35em] text-[#4d3684] transition-colors duration-300 hover:border-[#c897f6] hover:bg-[#f5edff]"
-              >
-                🏠 Dashboard
-              </button>
-            </div>
-          </div>
-        </header>
-        <section className="rounded-3xl border border-[#e6dcff] bg-white/85 p-6 shadow-[0_25px_70px_rgba(203,179,255,0.2)]">
-          <div className="mb-10 flex flex-wrap items-center justify-between gap-3">
-            {isLoading && (
-              <span className="rounded-full border border-[#d9cfff] bg-white px-3 py-1 text-xs uppercase tracking-[0.35em] text-[#7f6ab7]">
-                Lädt…
-              </span>
-            )}
-          </div>
-
-          <section className="grid gap-y-16 md:grid-cols-[220px_1fr] md:gap-x-12">
-            {stepCards.map(({ index, step, logs: stepLogs, status }) => {
-              const isActive = status === 'running';
-              const isDone = status === 'done';
-              const isError = status === 'error';
-              const isLast = index === stepCards.length - 1;
-              const lastLog = stepLogs[stepLogs.length - 1];
-              const displayLog = (() => {
-                if (lastLog) return lastLog.message;
-                if (isActive) return '⏳ Wird ausgeführt…';
-                if (isDone) return '✅ Schritt abgeschlossen.';
-                if (isError) return '❌ Schritt mit Fehler beendet.';
-                return '⏳ Noch nicht gestartet.';
-              })();
-
-              const connectorFill =
-                status === 'done' ? 100 : status === 'running' ? 55 : status === 'error' ? 20 : 0;
-
-              return (
-                <Fragment key={step.id}>
-                  <div className="relative flex flex-col items-center pb-20 md:pb-24">
-                    <div
-                      className={[
-                        'flex h-16 w-16 items-center justify-center rounded-full border-4 text-xl font-semibold transition-all duration-500',
-                        isError
-                          ? 'border-rose-300 bg-rose-100 text-rose-700'
-                          : isDone
-                            ? 'border-emerald-300 bg-emerald-100 text-emerald-700'
-                            : isActive
-                              ? 'border-[#d3a5f8] bg-[#d3a5f8]/20 text-[#36215f] animate-pulse'
-                              : 'border-[#d9cfff] bg-white text-[#7f6ab7]',
-                      ].join(' ')}
-                    >
-                      {step.icon}
-                    </div>
-
-                    {!isLast && (
-                      <div className="absolute left-1/2 top-16 bottom-[-6rem] w-[3px] -translate-x-1/2 overflow-hidden rounded-full bg-[#e2d8ff]">
-                        <div
-                          className="absolute inset-x-0 top-0 w-full bg-gradient-to-b from-[#d3a5f8] via-[#bca0f9] to-[#947bff] transition-all duration-700"
-                          style={{ height: `${connectorFill}%` }}
-                        />
-                      </div>
-                    )}
-                  </div>
-
-                  <article
-                    role="button"
-                    tabIndex={0}
-                    onClick={() => setSelectedStepId(step.id)}
-                    onKeyDown={(event) => {
-                      if (event.key === 'Enter' || event.key === ' ') {
-                        event.preventDefault();
-                        setSelectedStepId(step.id);
-                      }
-                    }}
-                    className={[
-                      'relative cursor-pointer rounded-2xl border px-6 py-7 transition-all duration-500 focus:outline-none focus-visible:ring-2 focus-visible:ring-[#d3a5f8] sm:hover:-translate-y-1',
-                      isError
-                        ? 'border-rose-300 bg-rose-50 shadow-[0_20px_50px_rgba(229,130,171,0.25)]'
-                        : isActive
-                          ? 'border-[#d3a5f8] bg-[#f3e8ff] shadow-[0_20px_50px_rgba(211,165,248,0.28)]'
-                          : isDone
-                            ? 'border-emerald-300 bg-emerald-50 shadow-[0_20px_50px_rgba(95,210,180,0.25)]'
-                            : 'border-[#e6dcff] bg-white/90 opacity-80 shadow-[0_15px_40px_rgba(203,179,255,0.15)]',
-                    ].join(' ')}
-                  >
-                    <div className="flex flex-wrap items-start justify-between gap-4">
-                      <div>
-                        <h2 className="text-lg font-semibold text-[#2c1f54]">
-                          {index + 1}. {step.title}
-                        </h2>
-                        <p className="mt-1 text-sm text-[#5a4a80]">{step.description}</p>
-                      </div>
-
-                      <span
-                        className={[
-                          'shrink-0 rounded-full border px-3 py-1 text-[11px] font-semibold uppercase tracking-widest',
-                          STATUS_STYLES[status],
-                        ].join(' ')}
-                      >
-                        {STATUS_LABEL[status]}
-                      </span>
-                    </div>
-
-                    <div className="mt-6 rounded-xl border border-[#e6dcff] bg-[#f7f2ff] p-5 text-sm leading-relaxed text-[#3b2a63]">
-                      {displayLog}
-                    </div>
-
-                    <p className="mt-3 text-[11px] uppercase tracking-[0.35em] text-[#8e7abf]">
-                      {stepLogs.length} Log-Einträge
-                    </p>
-                  </article>
-                </Fragment>
-              );
-            })}
-          </section>
-
-          {!isLoading && logs.length === 0 && (
-            <div className="mt-16 rounded-2xl border border-[#e6dcff] bg-white p-8 text-center text-[#7f6ab7]">
-              Noch keine Logs vorhanden. Starte die Pipeline, um neue Einträge zu erzeugen.
-            </div>
-          )}
-        </section>
-
-        <section className="rounded-3xl border border-[#e6dcff] bg-white/85 p-6 shadow-[0_25px_70px_rgba(203,179,255,0.2)]">
-          <div className="mb-6 flex flex-wrap items-center justify-between gap-4">
-            <div>
-              <h2 className="text-xl font-semibold text-[#2c1f54]">OCR Ergebnisse prüfen</h2>
-            </div>
-
-            <div className="flex flex-wrap items-end gap-4">
-              <div className="flex items-end gap-2">
-                <label className="flex flex-col text-xs uppercase tracking-[0.35em] text-[#7f6ab7]">
-                  <input
-                    type="number"
-                    value={itemsYear}
-                    min={2000}
-                    max={2100}
-                    onChange={(event) => handleYearChange(event.target.value)}
-                    className="mt-2 w-24 rounded-lg border border-[#d9cfff] bg-white px-3 py-2 text-sm text-[#2c1f54] focus:border-[#c89bf6] focus:outline-none focus:ring-2 focus:ring-[#d3a5f8]/40"
-                  />
-                </label>
-              </div>
-
-              <button
-                type="button"
-                onClick={handleImport}
-                disabled={!hasImportableItems || isImporting}
-                className={`h-10 rounded-full border px-5 text-xs font-semibold uppercase tracking-[0.35em] transition-colors duration-300 ${
-                  !hasImportableItems || isImporting
-                    ? 'cursor-not-allowed border-[#d9cfff] bg-white text-[#b4a5dd]'
-                    : 'border-emerald-300 bg-emerald-100 text-emerald-700 hover:border-emerald-400 hover:bg-emerald-200 hover:text-emerald-800'
-                }`}
-              >
-                💾 In DB übernehmen
-              </button>
-            </div>
-          </div>
-
-          {isLoadingItems && (
-            <div className="mb-4 rounded-2xl border border-[#e6dcff] bg-white p-4 text-center text-sm text-[#7f6ab7]">
-              OCR-Ergebnisse werden geladen…
-            </div>
-          )}
-
-          {itemsError && (
-            <div className="mb-4 rounded-2xl border border-rose-200 bg-rose-50 p-4 text-sm text-rose-700">
-              {itemsError}
-            </div>
-          )}
-
-          {itemsMessage && !isLoadingItems && (
-            <div className="mb-4 rounded-2xl border border-emerald-200 bg-emerald-50 p-4 text-sm text-emerald-700">
-              {itemsMessage}
-            </div>
-          )}
-
-          {!isLoadingItems && ocrItems.length === 0 && !itemsError && (
-            <div className="rounded-2xl border border-[#e6dcff] bg-white p-8 text-center text-[#7f6ab7]">
-              Aktuell liegen keine OCR-Ergebnisse vor. Starte die Pipeline oder lade die Daten neu.
-            </div>
-          )}
-
-          {!isLoadingItems && ocrItems.length > 0 && (
-            <div className="overflow-x-auto">
-              <table className="min-w-full divide-y divide-[#e5dbff] text-left text-sm text-[#3b2a63]">
-                <thead>
-                  <tr className="bg-[#f2eaff] text-xs uppercase tracking-[0.2em] text-[#7f63bb]">
-                    <th className="px-4 py-3">Import</th>
-                    <th className="px-4 py-3">Datum</th>
-                    <th className="px-4 py-3">Name</th>
-                    <th className="px-4 py-3">Kategorie</th>
-                    <th className="px-4 py-3">Preis</th>
-                    <th className="px-4 py-3">Typ</th>
-                    <th className="px-4 py-3">Tag</th>
-                    <th className="px-4 py-3">Status</th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-[#ece4ff]">
-                  {ocrItems.map((item) => (
-                    <tr key={item.id} className="align-top transition-colors duration-150 hover:bg-[#f6efff]">
-                      <td className="px-4 py-3">
-                        <input
-                          type="checkbox"
-                          checked={item.include}
-                          onChange={() => handleIncludeToggle(item.id)}
-                          className="h-5 w-5 rounded-md border-2 border-[#d9cfff] bg-white text-[#7f6ab7] accent-[#d3a5f8] shadow-[0_4px_12px_rgba(203,179,255,0.25)] transition-colors duration-200 focus:border-[#c897f6] focus:outline-none focus:ring-2 focus:ring-[#d3a5f8]/40"
-                        />
-                      </td>
-                      <td className="px-4 py-3">
-                        <input
-                          type="date"
-                          value={item.dateISO ?? ''}
-                          onChange={(event) => handleItemDateChange(item.id, event.target.value)}
-                          className="w-40 rounded-lg border border-[#d9cfff] bg-white px-3 py-2 text-sm text-[#2c1f54] focus:border-[#c89bf6] focus:outline-none focus:ring-2 focus:ring-[#d3a5f8]/40"
-                        />
-                        {item.dateRaw && (
-                          <p className="mt-1 text-[10px] uppercase tracking-[0.25em] text-[#8e7abf]">
-                            Raw: {item.dateRaw}
-                          </p>
-                        )}
-                      </td>
-                      <td className="px-4 py-3">
-                        <input
-                          type="text"
-                          value={item.name}
-                          onChange={(event) => handleItemFieldChange(item.id, 'name', event.target.value)}
-                          className="w-48 rounded-lg border border-[#d9cfff] bg-white px-3 py-2 text-sm text-[#2c1f54] focus:border-[#c89bf6] focus:outline-none focus:ring-2 focus:ring-[#d3a5f8]/40"
-                        />
-                      </td>
-                      <td className="px-4 py-3">
-                        <input
-                          type="text"
-                          value={item.category}
-                          onChange={(event) =>
-                            handleItemFieldChange(item.id, 'category', event.target.value)
-                          }
-                          className="w-44 rounded-lg border border-[#d9cfff] bg-white px-3 py-2 text-sm text-[#2c1f54] focus:border-[#c89bf6] focus:outline-none focus:ring-2 focus:ring-[#d3a5f8]/40"
-                        />
-                      </td>
-                      <td className="px-4 py-3">
-                        <input
-                          type="text"
-                          value={item.priceInput}
-                          placeholder={item.priceRaw || '0,00'}
-                          onChange={(event) => handleItemPriceChange(item.id, event.target.value)}
-                          className="w-28 rounded-lg border border-[#d9cfff] bg-white px-3 py-2 text-sm text-[#2c1f54] focus:border-[#c89bf6] focus:outline-none focus:ring-2 focus:ring-[#d3a5f8]/40"
-                        />
-                        {item.priceRaw && (
-                          <p className="mt-1 text-[10px] uppercase tracking-[0.25em] text-[#8e7abf]">
-                            Raw: {item.priceRaw}
-                          </p>
-                        )}
-                      </td>
-                      <td className="px-4 py-3">
-                        <div className="inline-flex overflow-hidden rounded-full border border-[#d9cfff] bg-white">
-                          <button
-                            type="button"
-                            onClick={() => handleItemTypeChange(item.id, 'expense')}
-                            className={`px-3 py-1 text-xs font-semibold uppercase tracking-[0.25em] transition-colors ${
-                              item.type === 'expense'
-                                ? 'bg-rose-100 text-rose-700'
-                                : 'text-[#7f6ab7] hover:text-rose-600'
-                            }`}
-                          >
-                            Expense
-                          </button>
-                          <button
-                            type="button"
-                            onClick={() => handleItemTypeChange(item.id, 'income')}
-                            className={`px-3 py-1 text-xs font-semibold uppercase tracking-[0.25em] transition-colors ${
-                              item.type === 'income'
-                                ? 'bg-emerald-100 text-emerald-700'
-                                : 'text-[#7f6ab7] hover:text-emerald-600'
-                            }`}
-                          >
-                            Income
-                          </button>
-                        </div>
-                      </td>
-                      <td className="px-4 py-3">
-                        <input
-                          type="text"
-                          value={item.tag}
-                          onChange={(event) => handleItemFieldChange(item.id, 'tag', event.target.value)}
-                          className="w-40 rounded-lg border border-[#d9cfff] bg-white px-3 py-2 text-sm text-[#2c1f54] focus:border-[#c89bf6] focus:outline-none focus:ring-2 focus:ring-[#d3a5f8]/40"
-                        />
-                      </td>
-                      <td className="px-4 py-3">
-                        <span
-                          className={`inline-flex rounded-full px-3 py-1 text-xs font-semibold uppercase tracking-[0.25em] ${
-                            item.status === 'saved'
-                              ? 'border border-emerald-200 bg-emerald-50 text-emerald-700'
-                              : item.status === 'error'
-                                ? 'border border-rose-200 bg-rose-50 text-rose-700'
-                                : 'border border-[#d9cfff] bg-white text-[#7f6ab7]'
-                            }`}
-                        >
-                          {item.status === 'saved'
-                            ? 'Gespeichert'
-                            : item.status === 'error'
-                              ? 'Fehler'
-                              : 'Offen'}
-                        </span>
-                        {item.error && (
-                          <p className="mt-1 text-[10px] uppercase tracking-[0.25em] text-rose-500">
-                            {item.error}
-                          </p>
-                        )}
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          )}
-        </section>
+        )}
+        <ProcessOcrItemsPanel
+          items={ocrItems}
+          itemsYear={itemsYear}
+          onYearChange={handleYearChange}
+          onIncludeToggle={handleIncludeToggle}
+          onItemFieldChange={handleItemFieldChange}
+          onItemPriceChange={handleItemPriceChange}
+          onItemTypeChange={handleItemTypeChange}
+          onItemDateChange={handleItemDateChange}
+          onImport={handleImport}
+          isImporting={isImporting}
+          hasImportableItems={hasImportableItems}
+          isLoadingItems={isLoadingItems}
+          itemsError={itemsError}
+          itemsMessage={itemsMessage}
+        />
 
       </div>
 
-      {selectedStep && (
-        <div
-          className="fixed inset-0 z-50 flex items-center justify-center bg-[#1b1038]/80 p-6 backdrop-blur-sm"
-          onClick={() => setSelectedStepId(null)}
-        >
-          <div
-            className="relative w-full max-w-4xl rounded-3xl border border-[#e6dcff] bg-white p-6 shadow-[0_30px_90px_rgba(206,185,255,0.35)]"
-            onClick={(event) => event.stopPropagation()}
-          >
-            <button
-              type="button"
-              onClick={() => setSelectedStepId(null)}
-              className="absolute right-4 top-4 rounded-full border border-[#e6dcff] bg-white/80 px-3 py-1 text-xs font-semibold uppercase tracking-[0.35em] text-[#4d3684] transition-colors duration-300 hover:border-[#d3a5f8] hover:bg-[#f5edff]"
-            >
-              Schließen
-            </button>
+      <ProcessStepLogsModal
+        selectedStep={selectedStep}
+        onClose={() => setSelectedStepId(null)}
+        formatTimestamp={formatTimestamp}
+      />
 
-            <h3 className="text-lg font-semibold text-[#2c1f54]">
-              {selectedStep.index + 1}. {selectedStep.step.title}
-            </h3>
-            <p className="mt-1 text-sm text-[#5a4a80]">{selectedStep.step.description}</p>
-
-            <div className="mt-6 max-h-[70vh] overflow-y-auto rounded-2xl border border-[#e6dcff] bg-[#f7f2ff] p-4">
-              {selectedStep.logs.length === 0 ? (
-                <div className="rounded-xl border border-[#e6dcff] bg-white p-6 text-center text-[#7f6ab7]">
-                  Keine Logs in diesem Schritt.
-                </div>
-              ) : (
-                <ul className="space-y-3">
-                  {selectedStep.logs.map((log, idx) => {
-                    const renderedTimestamp = formatTimestamp(log.timestamp);
-
-                    return (
-                      <li
-                        key={`${selectedStep.step.id}-${idx}`}
-                        className="rounded-xl border border-[#e6dcff] bg-white/90 p-4 shadow-[0_12px_35px_rgba(203,179,255,0.18)]"
-                      >
-                        <div className="flex flex-wrap items-center justify-between gap-2 text-[11px] uppercase tracking-[0.35em] text-[#8e7abf]">
-                          {renderedTimestamp && (
-                            <span className="font-mono text-[#4d3684]">{renderedTimestamp}</span>
-                          )}
-                          <span className="rounded-full border border-[#d9cfff] bg-white px-2 py-0.5 font-semibold text-[#4d3684]">
-                            {log.level}
-                          </span>
-                        </div>
-
-                        <p className="mt-2 text-sm font-medium text-[#2c1f54]">{log.message}</p>
-
-                        {log.data && Object.keys(log.data).length > 0 && (
-                          <pre className="mt-3 overflow-x-auto rounded-lg border border-[#e6dcff] bg-[#f3e8ff] p-3 text-[11px] leading-relaxed text-[#3b2a63]">
-                            {JSON.stringify(log.data, null, 2)}
-                          </pre>
-                        )}
-                      </li>
-                    );
-                  })}
-                </ul>
-              )}
-            </div>
-          </div>
-        </div>
-      )}
-
-      {isOcrPreviewOpen && ocrSummary?.resultImageUrl && (
-        <div
-          className="fixed inset-0 z-[60] flex items-center justify-center bg-[#1b1038]/80 p-6 backdrop-blur-sm"
-          onClick={() => setIsOcrPreviewOpen(false)}
-        >
-          <div
-            className="relative w-full max-w-5xl rounded-3xl border border-[#e6dcff] bg-white p-6 shadow-[0_30px_90px_rgba(206,185,255,0.35)]"
-            onClick={(event) => event.stopPropagation()}
-          >
-            <button
-              type="button"
-              onClick={() => setIsOcrPreviewOpen(false)}
-              className="absolute right-4 top-4 rounded-full border border-[#e6dcff] bg-white/80 px-3 py-1 text-xs font-semibold uppercase tracking-[0.35em] text-[#4d3684] transition-colors duration-300 hover:border-[#d3a5f8] hover:bg-[#f5edff]"
-            >
-              Schließen
-            </button>
-
-            <h3 className="text-lg font-semibold text-[#2c1f54]">OCR Ergebnis</h3>
-
-            <div className="mt-6 max-h-[70vh] overflow-auto rounded-2xl border border-[#e6dcff] bg-[#f7f2ff] p-4">
-              <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
-                <span className="font-mono text-xs text-[#6c5a94]">
-                  Zoom: {Math.round(ocrPreviewZoom * 100)}%
-                </span>
-                <div className="flex items-center gap-2">
-                  <button
-                    type="button"
-                    onClick={() =>
-                      setOcrPreviewZoom((prev) =>
-                        Math.max(0.25, Number((prev - 0.25).toFixed(2))),
-                      )
-                    }
-                    className="rounded-lg border border-[#e6dcff] bg-white/80 px-3 py-1 text-xs font-semibold uppercase tracking-[0.25em] text-[#4d3684] transition-colors duration-300 hover:border-[#c897f6] hover:bg-[#f5edff]"
-                    disabled={ocrPreviewZoom <= 0.25}
-                  >
-                    −
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => setOcrPreviewZoom(1)}
-                    className="rounded-lg border border-[#e6dcff] bg-white/80 px-3 py-1 text-xs font-semibold uppercase tracking-[0.25em] text-[#4d3684] transition-colors duration-300 hover:border-[#c897f6] hover:bg-[#f5edff]"
-                  >
-                    100%
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() =>
-                      setOcrPreviewZoom((prev) =>
-                        Math.min(4, Number((prev + 0.25).toFixed(2))),
-                      )
-                    }
-                    className="rounded-lg border border-[#e6dcff] bg-white/80 px-3 py-1 text-xs font-semibold uppercase tracking-[0.25em] text-[#4d3684] transition-colors duration-300 hover:border-[#c897f6] hover:bg-[#f5edff]"
-                    disabled={ocrPreviewZoom >= 4}
-                  >
-                    +
-                  </button>
-                </div>
-              </div>
-
-              <div className="flex justify-center rounded-xl border border-[#e6dcff] bg-white/90 p-4">
-                <div
-                  className="inline-block"
-                  style={{
-                    transform: `scale(${ocrPreviewZoom})`,
-                    transformOrigin: 'top center',
-                  }}
-                >
-                  {/* eslint-disable-next-line @next/next/no-img-element */}
-                  <img
-                    src={ocrSummary.resultImageUrl}
-                    alt="OCR Ergebnis"
-                    className="block"
-                    loading="lazy"
-                  />
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-      )}
+      <ProcessOcrPreviewModal
+        isOpen={isOcrPreviewOpen}
+        imageUrl={ocrSummary?.resultImageUrl}
+        zoom={ocrPreviewZoom}
+        onClose={() => setIsOcrPreviewOpen(false)}
+        onZoomChange={(value) => setOcrPreviewZoom(value)}
+      />
     </main>
   );
 }
