@@ -1,8 +1,9 @@
 @import "tailwindcss";
 
 :root {
-  --background: #020617;
-  --foreground: #e2e8f0;
+  --background: #f9f7ff;
+  --foreground: #21183c;
+  --accent: #d3a5f8;
   --color-background: var(--background);
   --color-foreground: var(--foreground);
   --font-sans: var(--font-geist-sans);
@@ -11,8 +12,8 @@
 
 @media (prefers-color-scheme: dark) {
   :root {
-    --background: #030712;
-    --foreground: #f8fafc;
+    --background: #1b0f2e;
+    --foreground: #f4ecff;
   }
 }
 
@@ -23,9 +24,8 @@ body {
 }
 
 .gradient-bg {
-  background: hsla(39, 100%, 71%, 1);
-  background: linear-gradient(90deg, hsla(39, 100%, 71%, 1) 0%, hsla(216, 100%, 62%, 1) 100%);
-  background: -moz-linear-gradient(90deg, hsla(39, 100%, 71%, 1) 0%, hsla(216, 100%, 62%, 1) 100%);
-  background: -webkit-linear-gradient(90deg, hsla(39, 100%, 71%, 1) 0%, hsla(216, 100%, 62%, 1) 100%);
-  filter: progid:DXImageTransform.Microsoft.gradient(startColorstr="#ffcb6b", endColorstr="#3d8bff", GradientType=1);
+  background: linear-gradient(90deg, #f3e8ff 0%, #d3a5f8 50%, #fefcff 100%);
+  background: -moz-linear-gradient(90deg, #f3e8ff 0%, #d3a5f8 50%, #fefcff 100%);
+  background: -webkit-linear-gradient(90deg, #f3e8ff 0%, #d3a5f8 50%, #fefcff 100%);
+  filter: progid:DXImageTransform.Microsoft.gradient(startColorstr="#f3e8ff", endColorstr="#fefcff", GradientType=1);
 }

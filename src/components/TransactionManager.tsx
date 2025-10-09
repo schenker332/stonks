@@ -41,7 +41,7 @@ export function TransactionManager() {
   };
 
   return (
-    <div className="rounded-3xl border border-slate-800/60 bg-slate-950/70 p-6 shadow-2xl shadow-slate-950/40 backdrop-blur">
+    <div className="rounded-3xl border border-[#e6dcff] bg-white/80 p-6 shadow-[0_25px_70px_rgba(203,179,255,0.25)] backdrop-blur-sm">
       <OcrSection />
       <TransactionForm onTransactionAdded={addTransaction} />
       <TransactionTable

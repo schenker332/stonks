@@ -88,14 +88,14 @@ export function ProcessSummary({ summaryData }: ProcessSummaryProps) {
 
   return (
     <>
-      <section className="rounded-2xl border border-purple-500/40 bg-gradient-to-br from-purple-500/10 via-purple-600/5 to-slate-950/60 p-6 shadow-xl shadow-purple-900/30">
+      <section className="rounded-2xl border border-[#d4c4ff] bg-gradient-to-br from-white via-[#f6f0ff] to-[#ede3ff] p-6 shadow-[0_25px_70px_rgba(211,165,248,0.2)]">
         <div className="mb-5 flex items-center gap-3">
-          <div className="rounded-full bg-purple-500/20 p-2">
+          <div className="rounded-full bg-[#d3a5f8]/25 p-2">
             <span className="text-2xl">📊</span>
           </div>
           <div>
-            <h2 className="text-xl font-semibold text-slate-50">Pipeline Summary</h2>
-            <p className="text-xs text-purple-200/70">
+            <h2 className="text-xl font-semibold text-[#2c1f54]">Pipeline Summary</h2>
+            <p className="text-xs text-[#8f73c4]">
               Übersicht der wichtigsten Metriken
             </p>
           </div>
@@ -104,23 +104,23 @@ export function ProcessSummary({ summaryData }: ProcessSummaryProps) {
         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
           {/* Finanzguru Fenster */}
           {summaryData.window && (
-            <div className="group rounded-xl border border-slate-700/60 bg-slate-900/70 p-4 transition-all duration-300 hover:border-sky-500/50 hover:bg-slate-900/90">
+            <div className="group rounded-xl border border-[#e6dcff] bg-white/80 p-4 transition-all duration-300 hover:border-[#bda4f6] hover:bg-[#f7efff]">
               <div className="mb-2 flex items-center gap-2">
                 <span className="text-xl">🖥️</span>
-                <h3 className="text-sm font-semibold uppercase tracking-widest text-slate-300">
+                <h3 className="text-sm font-semibold uppercase tracking-widest text-[#4d3684]">
                   Finanzguru Fenster
                 </h3>
               </div>
-              <div className="space-y-1.5 text-xs text-slate-400">
+              <div className="space-y-1.5 text-xs text-[#6c5a94]">
                 <div className="flex justify-between">
-                  <span className="text-slate-500">Position:</span>
-                  <span className="font-mono text-sky-300">
+                  <span className="text-[#8e7abf]">Position:</span>
+                  <span className="font-mono text-[#5a3da8]">
                     x={summaryData.window.x}, y={summaryData.window.y}
                   </span>
                 </div>
                 <div className="flex justify-between">
-                  <span className="text-slate-500">Größe:</span>
-                  <span className="font-mono text-sky-300">
+                  <span className="text-[#8e7abf]">Größe:</span>
+                  <span className="font-mono text-[#5a3da8]">
                     {summaryData.window.width} × {summaryData.window.height} px
                   </span>
                 </div>
@@ -130,23 +130,23 @@ export function ProcessSummary({ summaryData }: ProcessSummaryProps) {
 
           {/* Zusammengesetztes Bild */}
           {stitchedSummary && (
-            <div className="group rounded-xl border border-slate-700/60 bg-slate-900/70 p-4 transition-all duration-300 hover:border-emerald-500/50 hover:bg-slate-900/90">
+            <div className="group rounded-xl border border-[#e6dcff] bg-white/80 p-4 transition-all duration-300 hover:border-[#7fd6c3] hover:bg-[#f4fffb]">
               <div className="mb-2 flex items-center gap-2">
                 <span className="text-xl">🧩</span>
-                <h3 className="text-sm font-semibold uppercase tracking-widest text-slate-300">
+                <h3 className="text-sm font-semibold uppercase tracking-widest text-[#4d3684]">
                   Stitched Image
                 </h3>
               </div>
-              <div className="space-y-1.5 text-xs text-slate-400">
+              <div className="space-y-1.5 text-xs text-[#6c5a94]">
                 <div className="flex justify-between">
-                  <span className="text-slate-500">Breite:</span>
-                  <span className="font-mono text-emerald-300">
+                  <span className="text-[#8e7abf]">Breite:</span>
+                  <span className="font-mono text-emerald-600">
                     {stitchedSummary.width} px
                   </span>
                 </div>
                 <div className="flex justify-between">
-                  <span className="text-slate-500">Höhe:</span>
-                  <span className="font-mono text-emerald-300">
+                  <span className="text-[#8e7abf]">Höhe:</span>
+                  <span className="font-mono text-emerald-600">
                     {stitchedSummary.height} px
                   </span>
                 </div>
@@ -154,7 +154,7 @@ export function ProcessSummary({ summaryData }: ProcessSummaryProps) {
               {stitchedSummary.imageUrl && (
                 <button
                   onClick={handleStitchedPreview}
-                  className="mt-4 w-full rounded-lg border border-emerald-500/50 bg-emerald-500/10 py-2 text-xs font-semibold uppercase tracking-[0.3em] text-emerald-200 transition-colors duration-300 hover:border-emerald-400 hover:bg-emerald-500/20 hover:text-emerald-100"
+                  className="mt-4 w-full rounded-lg border border-emerald-400/50 bg-emerald-100/50 py-2 text-xs font-semibold uppercase tracking-[0.3em] text-emerald-700 transition-colors duration-300 hover:border-emerald-400 hover:bg-emerald-200 hover:text-emerald-800"
                 >
                   stitched.png ansehen
                 </button>
@@ -164,23 +164,23 @@ export function ProcessSummary({ summaryData }: ProcessSummaryProps) {
 
           {/* OCR Auswertung */}
           {ocrSummary && (
-            <div className="group rounded-xl border border-slate-700/60 bg-slate-900/70 p-4 transition-all duration-300 hover:border-fuchsia-500/50 hover:bg-slate-900/90">
+            <div className="group rounded-xl border border-[#e6dcff] bg-white/80 p-4 transition-all duration-300 hover:border-[#d3a5f8] hover:bg-[#f8f1ff]">
               <div className="mb-2 flex items-center gap-2">
                 <span className="text-xl">🧮</span>
-                <h3 className="text-sm font-semibold uppercase tracking-widest text-slate-300">
+                <h3 className="text-sm font-semibold uppercase tracking-widest text-[#4d3684]">
                   OCR Auswertung
                 </h3>
               </div>
-              <div className="space-y-1.5 text-xs text-slate-400">
+              <div className="space-y-1.5 text-xs text-[#6c5a94]">
                 <div className="flex justify-between">
-                  <span className="text-slate-500">Erkannte Einträge:</span>
-                  <span className="font-mono text-fuchsia-300">
+                  <span className="text-[#8e7abf]">Erkannte Einträge:</span>
+                  <span className="font-mono text-[#c26ef4]">
                     {ocrSummary.totalItems ?? '–'}
                   </span>
                 </div>
                 <div className="flex justify-between">
-                  <span className="text-slate-500">Erstes Datum:</span>
-                  <span className="font-mono text-fuchsia-300">
+                  <span className="text-[#8e7abf]">Erstes Datum:</span>
+                  <span className="font-mono text-[#c26ef4]">
                     {ocrSummary.firstDateFound
                       ? ocrSummary.firstDate || '—'
                       : 'nicht erkannt'}
@@ -190,7 +190,7 @@ export function ProcessSummary({ summaryData }: ProcessSummaryProps) {
               {ocrSummary.resultImageUrl && (
                 <button
                   onClick={handleOcrPreview}
-                  className="mt-4 w-full rounded-lg border border-fuchsia-500/50 bg-fuchsia-500/10 py-2 text-xs font-semibold uppercase tracking-[0.3em] text-fuchsia-200 transition-colors duration-300 hover:border-fuchsia-400 hover:bg-fuchsia-500/20 hover:text-fuchsia-100"
+                  className="mt-4 w-full rounded-lg border border-[#d3a5f8] bg-[#d3a5f8]/30 py-2 text-xs font-semibold uppercase tracking-[0.3em] text-[#3d2666] transition-colors duration-300 hover:border-[#c897f6] hover:bg-[#d3a5f8]/40 hover:text-[#2a184a]"
                 >
                   ocr_result.png ansehen
                 </button>
@@ -200,18 +200,18 @@ export function ProcessSummary({ summaryData }: ProcessSummaryProps) {
 
           {/* Transaktionsboxen */}
           {boxesSummary && (
-            <div className="group rounded-xl border border-slate-700/60 bg-slate-900/70 p-4 transition-all duration-300 hover:border-amber-500/50 hover:bg-slate-900/90 sm:col-span-2 lg:col-span-3">
+            <div className="group rounded-xl border border-[#e6dcff] bg-white/80 p-4 transition-all duration-300 hover:border-[#f6c981] hover:bg-[#fff9f0] sm:col-span-2 lg:col-span-3">
               <div className="mb-3 flex items-center justify-between gap-2">
                 <div className="flex items-center gap-2">
                   <span className="text-xl">📦</span>
-                  <h3 className="text-sm font-semibold uppercase tracking-widest text-slate-300">
+                  <h3 className="text-sm font-semibold uppercase tracking-widest text-[#4d3684]">
                     Transaktionen ({boxesSummary.count} gefunden)
                   </h3>
                 </div>
               </div>
 
               <div className="space-y-2">
-                <p className="mb-3 text-xs text-slate-500">
+                <p className="mb-3 text-xs text-[#8e7abf]">
                   Erste {Math.min(5, boxesSummary.boxes.length)} Boxen mit Position
                   & Größe:
                 </p>
@@ -220,35 +220,35 @@ export function ProcessSummary({ summaryData }: ProcessSummaryProps) {
                   {boxesSummary.boxes.map((box, idx) => (
                     <div
                       key={`${box.x}-${box.y}-${idx}`}
-                      className="group/box rounded-lg border border-amber-500/40 bg-gradient-to-br from-amber-500/10 to-slate-950/90 p-3 shadow-lg transition-all duration-300 hover:border-amber-400/60 hover:from-amber-500/20 hover:shadow-amber-900/30"
+                      className="group/box rounded-lg border border-[#f5d18d] bg-gradient-to-br from-[#fff3d7] to-[#f5ecff] p-3 shadow-[0_12px_36px_rgba(245,209,141,0.28)] transition-all duration-300 hover:border-[#f0be63] hover:from-[#ffe8ba] hover:shadow-[0_18px_42px_rgba(240,190,99,0.35)]"
                     >
                       <div className="mb-2 text-center">
-                        <span className="inline-block rounded-full bg-amber-500/30 px-2.5 py-0.5 text-xs font-bold text-amber-200 shadow-inner">
+                        <span className="inline-block rounded-full bg-[#fddaa4] px-2.5 py-0.5 text-xs font-bold text-[#7c4c06] shadow-inner">
                           Box #{idx + 1}
                         </span>
                       </div>
-                      <div className="space-y-1.5 text-[10px] text-slate-400">
-                        <div className="flex justify-between rounded bg-slate-950/50 px-2 py-1">
-                          <span className="text-slate-500">X:</span>
-                          <span className="font-mono font-semibold text-amber-300">
+                      <div className="space-y-1.5 text-[10px] text-[#6c5a94]">
+                        <div className="flex justify-between rounded bg-white/70 px-2 py-1">
+                          <span className="text-[#8e7abf]">X:</span>
+                          <span className="font-mono font-semibold text-[#c68a2f]">
                             {box.x} px
                           </span>
                         </div>
-                        <div className="flex justify-between rounded bg-slate-950/50 px-2 py-1">
-                          <span className="text-slate-500">Y:</span>
-                          <span className="font-mono font-semibold text-amber-300">
+                        <div className="flex justify-between rounded bg-white/70 px-2 py-1">
+                          <span className="text-[#8e7abf]">Y:</span>
+                          <span className="font-mono font-semibold text-[#c68a2f]">
                             {box.y} px
                           </span>
                         </div>
-                        <div className="flex justify-between rounded bg-slate-950/50 px-2 py-1">
-                          <span className="text-slate-500">W:</span>
-                          <span className="font-mono font-semibold text-amber-300">
+                        <div className="flex justify-between rounded bg-white/70 px-2 py-1">
+                          <span className="text-[#8e7abf]">W:</span>
+                          <span className="font-mono font-semibold text-[#c68a2f]">
                             {box.w} px
                           </span>
                         </div>
-                        <div className="flex justify-between rounded bg-slate-950/50 px-2 py-1">
-                          <span className="text-slate-500">H:</span>
-                          <span className="font-mono font-semibold text-amber-300">
+                        <div className="flex justify-between rounded bg-white/70 px-2 py-1">
+                          <span className="text-[#8e7abf]">H:</span>
+                          <span className="font-mono font-semibold text-[#c68a2f]">
                             {box.h} px
                           </span>
                         </div>
@@ -265,60 +265,60 @@ export function ProcessSummary({ summaryData }: ProcessSummaryProps) {
       {/* Preview Overlay */}
       {preview && (
         <div
-          className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/90 p-6 backdrop-blur-sm"
+          className="fixed inset-0 z-50 flex items-center justify-center bg-[#1b1038]/80 p-6 backdrop-blur-sm"
           onClick={closePreview}
         >
           <div
-            className="relative w-full max-w-5xl rounded-3xl border border-slate-700/70 bg-slate-900/95 p-6 shadow-2xl shadow-black/40"
+            className="relative w-full max-w-5xl rounded-3xl border border-[#e6dcff] bg-white p-6 shadow-[0_30px_90px_rgba(206,185,255,0.35)]"
             onClick={(event) => event.stopPropagation()}
           >
             <button
               onClick={closePreview}
-              className="absolute right-4 top-4 rounded-full border border-slate-700/70 bg-slate-900/80 px-3 py-1 text-xs font-semibold uppercase tracking-[0.35em] text-slate-300 transition-colors duration-300 hover:border-slate-500 hover:bg-slate-800"
+              className="absolute right-4 top-4 rounded-full border border-[#e6dcff] bg-white/80 px-3 py-1 text-xs font-semibold uppercase tracking-[0.35em] text-[#4d3684] transition-colors duration-300 hover:border-[#d3a5f8] hover:bg-[#f5edff]"
             >
               Schließen
             </button>
 
-            <h3 className="text-lg font-semibold text-slate-50">{preview.title}</h3>
+            <h3 className="text-lg font-semibold text-[#2c1f54]">{preview.title}</h3>
 
             {preview.meta && preview.meta.length > 0 && (
               <div className="mt-4 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
                 {preview.meta.map((item, index) => (
                   <div
                     key={`${item.label}-${index}`}
-                    className="rounded-xl border border-slate-800/70 bg-slate-950/80 p-3"
+                    className="rounded-xl border border-[#e6dcff] bg-[#f6f0ff] p-3"
                   >
-                    <p className="text-[10px] uppercase tracking-[0.35em] text-slate-500">
+                    <p className="text-[10px] uppercase tracking-[0.35em] text-[#8e7abf]">
                       {item.label}
                     </p>
-                    <p className="mt-1 font-mono text-xs text-slate-100">{item.value}</p>
+                    <p className="mt-1 font-mono text-xs text-[#3b2a63]">{item.value}</p>
                   </div>
                 ))}
               </div>
             )}
 
-            <div className="mt-6 max-h-[70vh] overflow-auto rounded-2xl border border-slate-800/70 bg-slate-950/60 p-4">
+            <div className="mt-6 max-h-[70vh] overflow-auto rounded-2xl border border-[#e6dcff] bg-[#f7f2ff] p-4">
               <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
-                <span className="font-mono text-xs text-slate-400">
+                <span className="font-mono text-xs text-[#6c5a94]">
                   Zoom: {Math.round(zoom * 100)}%
                 </span>
                 <div className="flex items-center gap-2">
                   <button
                     onClick={() => setZoom((prev) => Math.max(0.25, Number((prev - 0.25).toFixed(2))))}
-                    className="rounded-lg border border-slate-700/70 bg-slate-900/70 px-3 py-1 text-xs font-semibold uppercase tracking-[0.25em] text-slate-300 transition-colors duration-300 hover:border-slate-500 hover:bg-slate-800"
+                    className="rounded-lg border border-[#e6dcff] bg-white/80 px-3 py-1 text-xs font-semibold uppercase tracking-[0.25em] text-[#4d3684] transition-colors duration-300 hover:border-[#c897f6] hover:bg-[#f5edff]"
                     disabled={zoom <= 0.25}
                   >
                     −
                   </button>
                   <button
                     onClick={() => setZoom(1)}
-                    className="rounded-lg border border-slate-700/70 bg-slate-900/70 px-3 py-1 text-xs font-semibold uppercase tracking-[0.25em] text-slate-300 transition-colors duration-300 hover:border-slate-500 hover:bg-slate-800"
+                    className="rounded-lg border border-[#e6dcff] bg-white/80 px-3 py-1 text-xs font-semibold uppercase tracking-[0.25em] text-[#4d3684] transition-colors duration-300 hover:border-[#c897f6] hover:bg-[#f5edff]"
                   >
                     100%
                   </button>
                   <button
                     onClick={() => setZoom((prev) => Math.min(4, Number((prev + 0.25).toFixed(2))))}
-                    className="rounded-lg border border-slate-700/70 bg-slate-900/70 px-3 py-1 text-xs font-semibold uppercase tracking-[0.25em] text-slate-300 transition-colors duration-300 hover:border-slate-500 hover:bg-slate-800"
+                    className="rounded-lg border border-[#e6dcff] bg-white/80 px-3 py-1 text-xs font-semibold uppercase tracking-[0.25em] text-[#4d3684] transition-colors duration-300 hover:border-[#c897f6] hover:bg-[#f5edff]"
                     disabled={zoom >= 4}
                   >
                     +
@@ -326,7 +326,7 @@ export function ProcessSummary({ summaryData }: ProcessSummaryProps) {
                 </div>
               </div>
 
-              <div className="rounded-xl border border-slate-800/60 bg-slate-950/70 flex justify-center p-4">
+              <div className="flex justify-center rounded-xl border border-[#e6dcff] bg-white/90 p-4">
                 <div
                   className="inline-block"
                   style={{

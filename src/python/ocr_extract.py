@@ -29,6 +29,52 @@ def log(level: str, message: str, step: str | None = STEP_NAME, **data):
     sys.stdout.flush()
 
 
+# Referenzfarben (Lab) für Expense/Income basierend auf RGB (54,24,145) bzw. (44,198,85)
+EXPENSE_LAB = np.array([39.0, 66.0, -55.0], dtype=np.float32)
+INCOME_LAB = np.array([78.0, -55.0, 52.0], dtype=np.float32)
+
+
+def classify_amount_from_color(region_rgb: np.ndarray | None) -> tuple[str | None, list[float] | None]:
+    if region_rgb is None or region_rgb.size == 0:
+        return None, None
+
+    try:
+        roi = region_rgb.astype(np.float32)
+
+        h, w, _ = roi.shape
+        if h > 4 and w > 4:
+            border_h = max(1, int(h * 0.2))
+            border_w = max(1, int(w * 0.1))
+            cropped = roi[border_h:h - border_h, border_w:w - border_w]
+            if cropped.size > 0:
+                roi = cropped
+
+        roi_bgr = cv2.cvtColor(roi, cv2.COLOR_RGB2BGR)
+        roi_lab = cv2.cvtColor(roi_bgr, cv2.COLOR_BGR2LAB)
+
+        pixels = roi_lab.reshape(-1, 3)
+
+        L = pixels[:, 0]
+        a = pixels[:, 1]
+        b = pixels[:, 2]
+        color_mask = (L < 240) & ((np.abs(a - 128) > 4) | (np.abs(b - 128) > 4))
+        if np.count_nonzero(color_mask) > 10:
+            pixels = pixels[color_mask]
+
+        avg_lab = np.median(pixels, axis=0)
+
+        dist_expense = np.linalg.norm(avg_lab - EXPENSE_LAB)
+        dist_income = np.linalg.norm(avg_lab - INCOME_LAB)
+
+        if np.isnan(dist_expense) or np.isnan(dist_income):
+            return None, avg_lab.tolist()
+
+        detected = "expense" if dist_expense <= dist_income else "income"
+        return detected, avg_lab.tolist()
+    except Exception:
+        return None, None
+
+
 
 def boxdrawer(start_x, start_y, height, source, destination, mode, buffer, draw):
     import cv2, numpy as np
@@ -204,10 +250,28 @@ def ocr_extract(stitched_path, debug_path):
         c = lenght3 + 3 if black_pixel1 > 1000 else 0
         lenght3 = boxdrawer(start_x=x + 725 - c, start_y=y + 35, height=40, source=thresh, destination=OG, mode='starting_right', buffer=12, draw=True)
         price_config = '--oem 3 --psm 7 -c tessedit_char_whitelist="-−0123456789,. €$" --psm 7'
-        price = pytesseract.image_to_string(gray[y + 35:y + 35 + 40, x + 725 - c - lenght3:x + 725 - c], lang="deu", config=price_config)
-        if "," not in price: price = price[:-5] + "," + price[-5:]
-        
+        price_slice = (slice(y + 35, y + 35 + 40), slice(x + 725 - c - lenght3, x + 725 - c))
+        price_gray = gray[price_slice]
+        price_rgb = OG[price_slice]
+        price = pytesseract.image_to_string(price_gray, lang="deu", config=price_config)
+        if len(price) > 5 and "," not in price:
+            price = price[:-5] + "," + price[-5:]
 
+        price_clean = price.strip()
+        has_minus = "-" in price_clean or "−" in price_clean
+        color_type, color_lab = classify_amount_from_color(price_rgb)
+        if color_type is None:
+            detected_type = "expense" if has_minus else "income"
+        else:
+            detected_type = color_type
+
+        normalized = price_clean.lstrip("-−+")
+        if detected_type == "expense":
+            price_clean = f"-{normalized}" if normalized else "-0,00"
+        else:
+            price_clean = normalized
+
+        price = price_clean.strip()
 
         # Name
         lenght2 = boxdrawer(start_x=x + 98, start_y=y + 20 - a, height=35, source=thresh, destination=black, mode='starting_left', buffer=12, draw=True)
@@ -225,8 +289,18 @@ def ocr_extract(stitched_path, debug_path):
             category=category.strip(), 
             price=price.strip(), 
             tag=tag.strip(),
-            date=current_date)
-        items.append({"name": name.strip(), "category": category.strip(), "price": price.strip(), "tag": tag.strip(), "date": current_date})
+            date=current_date,
+            type=detected_type,
+            color_lab=color_lab)
+        items.append({
+            "name": name.strip(),
+            "category": category.strip(),
+            "price": price.strip(),
+            "tag": tag.strip(),
+            "date": current_date,
+            "type": detected_type,
+            "color_lab": color_lab,
+        })
 
 
         # Nummer auf Image

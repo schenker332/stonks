@@ -35,12 +35,12 @@ export function TransactionTable({ transactions, onTransactionDeleted }: Transac
   };
 
   return (
-    <div className="mb-6 mt-6 rounded-2xl border border-slate-800/60 bg-slate-950/70 p-6 shadow-lg shadow-slate-950/40">
+    <div className="mb-6 mt-6 rounded-2xl border border-[#e6dcff] bg-white/85 p-6 shadow-[0_18px_50px_rgba(211,165,248,0.15)]">
       <div className="overflow-x-auto">
-        <table className="min-w-full divide-y divide-slate-800 text-left text-sm text-slate-300">
+        <table className="min-w-full divide-y divide-[#e5dbff] text-left text-sm text-[#3b2a63]">
           <thead>
-            <tr className="bg-slate-900/80 text-xs uppercase tracking-[0.2em] text-slate-500">
-              <th className="rounded-tl-xl px-4 py-3">Datum</th>
+            <tr className="bg-[#f2eaff] text-xs uppercase tracking-[0.2em] text-[#7f63bb]">
+              <th className="rounded-tl-xl px-4 py-3 text-left">Datum</th>
               <th className="px-4 py-3">Name</th>
               <th className="px-4 py-3">Kategorie</th>
               <th className="px-4 py-3 text-right">Preis</th>
@@ -48,29 +48,29 @@ export function TransactionTable({ transactions, onTransactionDeleted }: Transac
               <th className="rounded-tr-xl px-4 py-3 text-right">Aktion</th>
             </tr>
           </thead>
-          <tbody className="divide-y divide-slate-800/70">
+          <tbody className="divide-y divide-[#ece4ff]">
             {transactions.map((tx) => (
               <tr
                 key={tx.id}
-                className="transition-colors duration-200 hover:bg-slate-900/60"
+                className="transition-colors duration-200 hover:bg-[#f6efff]"
               >
-                <td className="px-4 py-3 text-slate-300">
+                <td className="px-4 py-3 text-[#4a366f]">
                   {new Date(tx.date).toLocaleDateString('de-DE')}
                 </td>
-                <td className="px-4 py-3 text-slate-100">{tx.name}</td>
-                <td className="px-4 py-3 text-slate-300">{tx.category}</td>
+                <td className="px-4 py-3 text-[#2c1f54] font-medium">{tx.name}</td>
+                <td className="px-4 py-3 text-[#4a366f]">{tx.category}</td>
                 <td
                   className={`px-4 py-3 text-right font-semibold ${
-                    tx.type === 'income' ? 'text-emerald-300' : 'text-rose-300'
+                    tx.type === 'income' ? 'text-emerald-500' : 'text-rose-400'
                   }`}
                 >
                   {tx.type === 'expense' ? '- ' : '+ '}€{tx.price.toFixed(2)}
                 </td>
-                <td className="px-4 py-3 text-slate-400">{tx.tag}</td>
+                <td className="px-4 py-3 text-[#6f5aa4]">{tx.tag}</td>
                 <td className="px-4 py-3 text-right">
                   <button
                     onClick={() => handleDelete(tx.id)}
-                    className="rounded-full border border-rose-500/40 bg-rose-500/10 px-3 py-1 text-xs font-semibold uppercase tracking-widest text-rose-200 transition-all duration-300 hover:border-rose-400 hover:bg-rose-500/20 hover:text-rose-100"
+                    className="rounded-full border border-[#f2b4d3] bg-[#f9d4e7] px-3 py-1 text-xs font-semibold uppercase tracking-widest text-[#a63d71] transition-all duration-300 hover:border-[#e99bc1] hover:bg-[#f7c6dd] hover:text-[#802b55]"
                   >
                     Löschen
                   </button>

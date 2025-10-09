@@ -561,10 +561,10 @@ const STATUS_LABEL: Record<StepStatus, string> = {
 };
 
 const STATUS_STYLES: Record<StepStatus, string> = {
-  idle: 'border-slate-700 bg-slate-900 text-slate-400',
-  running: 'border-sky-400/60 bg-sky-500/10 text-sky-200',
-  done: 'border-emerald-400/60 bg-emerald-500/10 text-emerald-200',
-  error: 'border-rose-500/60 bg-rose-500/10 text-rose-200',
+  idle: 'border-[#d9cfff] bg-white text-[#7f6ab7]',
+  running: 'border-[#d3a5f8] bg-[#d3a5f8]/25 text-[#36215f]',
+  done: 'border-emerald-300 bg-emerald-100 text-emerald-700',
+  error: 'border-rose-300 bg-rose-100 text-rose-700',
 };
 
 export default function ProcessPage() {
@@ -867,14 +867,13 @@ export default function ProcessPage() {
     if (isRunning) {
       return {
         label: 'Pipeline läuft',
-        className:
-          'border-emerald-500/40 bg-emerald-500/10 text-emerald-200 shadow-[0_0_30px_-15px] shadow-emerald-500/40',
+        className: 'border-[#d3a5f8] bg-[#f3e8ff] text-[#36215f] shadow-[0_16px_45px_rgba(211,165,248,0.3)]',
       };
     }
     if (hasErrors) {
       return {
         label: 'Fehler erkannt',
-        className: 'border-rose-500/40 bg-rose-500/10 text-rose-200',
+        className: 'border-rose-300 bg-rose-50 text-rose-700',
       };
     }
     return null;
@@ -900,33 +899,33 @@ export default function ProcessPage() {
         : null;
 
   return (
-    <main className="min-h-screen bg-slate-950 py-12 px-6 text-slate-100">
+    <main className="min-h-screen bg-[#f9f7ff] py-12 px-6 text-[#21183c]">
       <div className="mx-auto flex w-full max-w-5xl flex-col gap-10">
-        <header className="flex flex-col gap-6 rounded-3xl border border-slate-800/60 bg-slate-950/70 p-6 shadow-xl shadow-slate-950/40 sm:flex-row sm:items-center sm:justify-between">
+        <header className="flex flex-col gap-6 rounded-3xl border border-[#e6dcff] bg-white/85 p-6 shadow-[0_25px_70px_rgba(203,179,255,0.25)] sm:flex-row sm:items-center sm:justify-between">
           <div className="space-y-4">
             <div>
-              <p className="text-xs uppercase tracking-[0.35em] text-slate-500">
+              <p className="text-xs uppercase tracking-[0.35em] text-[#a17bdc]">
                 Pipeline Control
               </p>
-              <h1 className="mt-2 text-3xl font-semibold text-slate-50">
+              <h1 className="mt-2 text-3xl font-semibold text-[#2c1f54]">
                 🛠️ Process Monitor
               </h1>
-              <p className="mt-3 max-w-xl text-sm text-slate-400">
+              <p className="mt-3 max-w-xl text-sm text-[#5a4a80]">
                 Greife auf die gespeicherten JSON-Logs der Python-Pipeline zu, starte neue
-                Durchläufe manuell und inspiziere die Schritte einzeln.
+                Durchläufe manuell und inspiziere die Schritte einzeln – jetzt im hellen Lila-Theme.
               </p>
             </div>
 
-            <div className="flex flex-wrap items-center gap-3 text-xs text-slate-500">
+            <div className="flex flex-wrap items-center gap-3 text-xs text-[#7f6ab7]">
               {formattedLastAdded && (
-                <span className="rounded-full border border-slate-700 bg-slate-900/60 px-3 py-1 font-mono tracking-widest text-slate-300">
+                <span className="rounded-full border border-[#d9cfff] bg-white px-3 py-1 font-mono tracking-widest text-[#4d3684]">
                   Zuletzt hinzugefügt: {formattedLastAdded}
                 </span>
               )}
             </div>
 
             {fetchError && (
-              <div className="rounded-xl border border-rose-500/40 bg-rose-500/10 p-4 text-sm text-rose-200">
+              <div className="rounded-xl border border-rose-200 bg-rose-50 p-4 text-sm text-rose-700">
                 {fetchError}
               </div>
             )}
@@ -948,8 +947,8 @@ export default function ProcessPage() {
                 disabled={isRunning}
                 className={`rounded-full border px-5 py-2 text-xs font-semibold uppercase tracking-[0.35em] transition-colors duration-300 ${
                   isRunning
-                    ? 'cursor-not-allowed border-slate-700 bg-slate-900/60 text-slate-500'
-                    : 'border-emerald-500/60 bg-emerald-500/10 text-emerald-100 hover:border-emerald-400 hover:bg-emerald-500/20 hover:text-emerald-50'
+                    ? 'cursor-not-allowed border-[#d9cfff] bg-white text-[#b4a5dd]'
+                    : 'border-emerald-300 bg-emerald-100 text-emerald-700 hover:border-emerald-400 hover:bg-emerald-200 hover:text-emerald-800'
                 }`}
               >
                 🚀 OCR manuell starten
@@ -958,7 +957,7 @@ export default function ProcessPage() {
               <button
                 type="button"
                 onClick={() => router.push('/')}
-                className="rounded-full border border-slate-700 bg-slate-900/60 px-5 py-2 text-xs font-semibold uppercase tracking-[0.35em] text-slate-200 transition-colors duration-300 hover:border-slate-500 hover:bg-slate-800"
+                className="rounded-full border border-[#d9cfff] bg-white/80 px-5 py-2 text-xs font-semibold uppercase tracking-[0.35em] text-[#4d3684] transition-colors duration-300 hover:border-[#c897f6] hover:bg-[#f5edff]"
               >
                 🏠 Zum Dashboard
               </button>
@@ -966,20 +965,20 @@ export default function ProcessPage() {
           </div>
         </header>
 
-        <section className="rounded-3xl border border-slate-800/60 bg-slate-950/70 p-6 shadow-xl shadow-slate-950/40">
+        <section className="rounded-3xl border border-[#e6dcff] bg-white/85 p-6 shadow-[0_25px_70px_rgba(203,179,255,0.2)]">
           <div className="mb-10 flex flex-wrap items-center justify-between gap-3">
             <div>
-              <h2 className="text-xl font-semibold text-slate-50">Pipeline Schritte</h2>
-              <p className="text-sm text-slate-400">
+              <h2 className="text-xl font-semibold text-[#2c1f54]">Pipeline Schritte</h2>
+              <p className="text-sm text-[#5a4a80]">
                 Die drei Hauptphasen der Pipeline nutzen die gespeicherten Logs aus{' '}
-                <code className="rounded bg-slate-900 px-1 py-0.5 text-[11px] text-slate-300">
+                <code className="rounded bg-[#ede3ff] px-1 py-0.5 text-[11px] text-[#4d3684]">
                   data/process-log.jsonl
                 </code>
                 . Tippe auf eine Karte, um alle Einträge zu sehen.
               </p>
             </div>
             {isLoading && (
-              <span className="rounded-full border border-slate-700 bg-slate-900/60 px-3 py-1 text-xs uppercase tracking-[0.35em] text-slate-400">
+              <span className="rounded-full border border-[#d9cfff] bg-white px-3 py-1 text-xs uppercase tracking-[0.35em] text-[#7f6ab7]">
                 Lädt…
               </span>
             )}
@@ -1010,21 +1009,21 @@ export default function ProcessPage() {
                       className={[
                         'flex h-16 w-16 items-center justify-center rounded-full border-4 text-xl font-semibold transition-all duration-500',
                         isError
-                          ? 'border-rose-400 bg-rose-500/20 text-rose-100'
+                          ? 'border-rose-300 bg-rose-100 text-rose-700'
                           : isDone
-                            ? 'border-emerald-400 bg-emerald-500/20 text-emerald-100'
+                            ? 'border-emerald-300 bg-emerald-100 text-emerald-700'
                             : isActive
-                              ? 'border-sky-400 bg-sky-500/20 text-sky-100 animate-pulse'
-                              : 'border-slate-700 bg-slate-900 text-slate-300',
+                              ? 'border-[#d3a5f8] bg-[#d3a5f8]/20 text-[#36215f] animate-pulse'
+                              : 'border-[#d9cfff] bg-white text-[#7f6ab7]',
                       ].join(' ')}
                     >
                       {step.icon}
                     </div>
 
                     {!isLast && (
-                      <div className="absolute left-1/2 top-16 bottom-[-6rem] w-[3px] -translate-x-1/2 overflow-hidden rounded-full bg-slate-800">
+                      <div className="absolute left-1/2 top-16 bottom-[-6rem] w-[3px] -translate-x-1/2 overflow-hidden rounded-full bg-[#e2d8ff]">
                         <div
-                          className="absolute inset-x-0 top-0 w-full bg-gradient-to-b from-cyan-400 via-sky-400 to-blue-500 transition-all duration-700"
+                          className="absolute inset-x-0 top-0 w-full bg-gradient-to-b from-[#d3a5f8] via-[#bca0f9] to-[#947bff] transition-all duration-700"
                           style={{ height: `${connectorFill}%` }}
                         />
                       </div>
@@ -1042,22 +1041,22 @@ export default function ProcessPage() {
                       }
                     }}
                     className={[
-                      'relative cursor-pointer rounded-2xl border px-6 py-7 shadow-lg transition-all duration-500 focus:outline-none focus-visible:ring-2 focus-visible:ring-sky-400 sm:hover:-translate-y-1',
+                      'relative cursor-pointer rounded-2xl border px-6 py-7 transition-all duration-500 focus:outline-none focus-visible:ring-2 focus-visible:ring-[#d3a5f8] sm:hover:-translate-y-1',
                       isError
-                        ? 'border-rose-500/60 bg-rose-500/10 shadow-rose-900/40'
+                        ? 'border-rose-300 bg-rose-50 shadow-[0_20px_50px_rgba(229,130,171,0.25)]'
                         : isActive
-                          ? 'border-sky-400/60 bg-slate-900/70 shadow-sky-900/60'
+                          ? 'border-[#d3a5f8] bg-[#f3e8ff] shadow-[0_20px_50px_rgba(211,165,248,0.28)]'
                           : isDone
-                            ? 'border-emerald-500/40 bg-slate-900/60'
-                            : 'border-slate-800 bg-slate-900/40 opacity-80',
+                            ? 'border-emerald-300 bg-emerald-50 shadow-[0_20px_50px_rgba(95,210,180,0.25)]'
+                            : 'border-[#e6dcff] bg-white/90 opacity-80 shadow-[0_15px_40px_rgba(203,179,255,0.15)]',
                     ].join(' ')}
                   >
                     <div className="flex flex-wrap items-start justify-between gap-4">
                       <div>
-                        <h2 className="text-lg font-semibold text-slate-50">
+                        <h2 className="text-lg font-semibold text-[#2c1f54]">
                           {index + 1}. {step.title}
                         </h2>
-                        <p className="mt-1 text-sm text-slate-400">{step.description}</p>
+                        <p className="mt-1 text-sm text-[#5a4a80]">{step.description}</p>
                       </div>
 
                       <span
@@ -1070,11 +1069,11 @@ export default function ProcessPage() {
                       </span>
                     </div>
 
-                    <div className="mt-6 rounded-xl border border-slate-800 bg-slate-950/60 p-5 text-sm leading-relaxed text-slate-200">
+                    <div className="mt-6 rounded-xl border border-[#e6dcff] bg-[#f7f2ff] p-5 text-sm leading-relaxed text-[#3b2a63]">
                       {displayLog}
                     </div>
 
-                    <p className="mt-3 text-[11px] uppercase tracking-[0.35em] text-slate-500">
+                    <p className="mt-3 text-[11px] uppercase tracking-[0.35em] text-[#8e7abf]">
                       {stepLogs.length} Log-Einträge
                     </p>
                   </article>
@@ -1084,17 +1083,17 @@ export default function ProcessPage() {
           </section>
 
           {!isLoading && logs.length === 0 && (
-            <div className="mt-16 rounded-2xl border border-slate-800 bg-slate-950/70 p-8 text-center text-slate-400">
+            <div className="mt-16 rounded-2xl border border-[#e6dcff] bg-white p-8 text-center text-[#7f6ab7]">
               Noch keine Logs vorhanden. Starte die Pipeline, um neue Einträge zu erzeugen.
             </div>
           )}
         </section>
 
-        <section className="rounded-3xl border border-slate-800/60 bg-slate-950/70 p-6 shadow-xl shadow-slate-950/40">
+        <section className="rounded-3xl border border-[#e6dcff] bg-white/85 p-6 shadow-[0_25px_70px_rgba(203,179,255,0.2)]">
           <div className="mb-6 flex flex-wrap items-center justify-between gap-4">
             <div>
-              <h2 className="text-xl font-semibold text-slate-50">OCR Ergebnisse prüfen</h2>
-              <p className="text-sm text-slate-400">
+              <h2 className="text-xl font-semibold text-[#2c1f54]">OCR Ergebnisse prüfen</h2>
+              <p className="text-sm text-[#5a4a80]">
                 Überprüfe die erkannten Transaktionen, passe sie bei Bedarf an und übernimm sie
                 erst danach in die Datenbank.
               </p>
@@ -1102,7 +1101,7 @@ export default function ProcessPage() {
 
             <div className="flex flex-wrap items-end gap-4">
               <div className="flex items-end gap-2">
-                <label className="flex flex-col text-xs uppercase tracking-[0.35em] text-slate-500">
+                <label className="flex flex-col text-xs uppercase tracking-[0.35em] text-[#7f6ab7]">
                   Jahr für Datumszuordnung
                   <input
                     type="number"
@@ -1110,13 +1109,13 @@ export default function ProcessPage() {
                     min={2000}
                     max={2100}
                     onChange={(event) => handleYearChange(event.target.value)}
-                    className="mt-2 w-24 rounded-lg border border-slate-700 bg-slate-900 px-3 py-2 text-sm text-slate-100 focus:border-sky-400 focus:outline-none"
+                    className="mt-2 w-24 rounded-lg border border-[#d9cfff] bg-white px-3 py-2 text-sm text-[#2c1f54] focus:border-[#c89bf6] focus:outline-none focus:ring-2 focus:ring-[#d3a5f8]/40"
                   />
                 </label>
                 <button
                   type="button"
                   onClick={loadOcrItems}
-                  className="h-10 rounded-full border border-slate-700 bg-slate-900/60 px-4 text-xs font-semibold uppercase tracking-[0.3em] text-slate-300 transition-colors duration-300 hover:border-slate-500 hover:bg-slate-800"
+                  className="h-10 rounded-full border border-[#d9cfff] bg-white/80 px-4 text-xs font-semibold uppercase tracking-[0.3em] text-[#4d3684] transition-colors duration-300 hover:border-[#c897f6] hover:bg-[#f5edff]"
                 >
                   🔄 Neu laden
                 </button>
@@ -1128,8 +1127,8 @@ export default function ProcessPage() {
                 disabled={!hasImportableItems || isImporting}
                 className={`h-10 rounded-full border px-5 text-xs font-semibold uppercase tracking-[0.35em] transition-colors duration-300 ${
                   !hasImportableItems || isImporting
-                    ? 'cursor-not-allowed border-slate-700 bg-slate-900/60 text-slate-500'
-                    : 'border-emerald-500/60 bg-emerald-500/10 text-emerald-100 hover:border-emerald-400 hover:bg-emerald-500/20 hover:text-emerald-50'
+                    ? 'cursor-not-allowed border-[#d9cfff] bg-white text-[#b4a5dd]'
+                    : 'border-emerald-300 bg-emerald-100 text-emerald-700 hover:border-emerald-400 hover:bg-emerald-200 hover:text-emerald-800'
                 }`}
               >
                 💾 In DB übernehmen
@@ -1138,34 +1137,34 @@ export default function ProcessPage() {
           </div>
 
           {isLoadingItems && (
-            <div className="mb-4 rounded-2xl border border-slate-800/70 bg-slate-900/70 p-4 text-center text-sm text-slate-400">
+            <div className="mb-4 rounded-2xl border border-[#e6dcff] bg-white p-4 text-center text-sm text-[#7f6ab7]">
               OCR-Ergebnisse werden geladen…
             </div>
           )}
 
           {itemsError && (
-            <div className="mb-4 rounded-2xl border border-rose-500/40 bg-rose-500/10 p-4 text-sm text-rose-200">
+            <div className="mb-4 rounded-2xl border border-rose-200 bg-rose-50 p-4 text-sm text-rose-700">
               {itemsError}
             </div>
           )}
 
           {itemsMessage && !isLoadingItems && (
-            <div className="mb-4 rounded-2xl border border-emerald-500/40 bg-emerald-500/10 p-4 text-sm text-emerald-200">
+            <div className="mb-4 rounded-2xl border border-emerald-200 bg-emerald-50 p-4 text-sm text-emerald-700">
               {itemsMessage}
             </div>
           )}
 
           {!isLoadingItems && ocrItems.length === 0 && !itemsError && (
-            <div className="rounded-2xl border border-slate-800/70 bg-slate-900/70 p-8 text-center text-slate-400">
+            <div className="rounded-2xl border border-[#e6dcff] bg-white p-8 text-center text-[#7f6ab7]">
               Aktuell liegen keine OCR-Ergebnisse vor. Starte die Pipeline oder lade die Daten neu.
             </div>
           )}
 
           {!isLoadingItems && ocrItems.length > 0 && (
             <div className="overflow-x-auto">
-              <table className="min-w-full divide-y divide-slate-800 text-left text-sm text-slate-300">
+              <table className="min-w-full divide-y divide-[#e5dbff] text-left text-sm text-[#3b2a63]">
                 <thead>
-                  <tr className="bg-slate-900/80 text-xs uppercase tracking-[0.2em] text-slate-500">
+                  <tr className="bg-[#f2eaff] text-xs uppercase tracking-[0.2em] text-[#7f63bb]">
                     <th className="px-4 py-3">Import</th>
                     <th className="px-4 py-3">Datum</th>
                     <th className="px-4 py-3">Name</th>
@@ -1176,15 +1175,15 @@ export default function ProcessPage() {
                     <th className="px-4 py-3">Status</th>
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-slate-800/70">
+                <tbody className="divide-y divide-[#ece4ff]">
                   {ocrItems.map((item) => (
-                    <tr key={item.id} className="align-top transition-colors duration-150 hover:bg-slate-900/60">
+                    <tr key={item.id} className="align-top transition-colors duration-150 hover:bg-[#f6efff]">
                       <td className="px-4 py-3">
                         <input
                           type="checkbox"
                           checked={item.include}
                           onChange={() => handleIncludeToggle(item.id)}
-                          className="h-4 w-4 rounded border-slate-600 bg-slate-900 text-emerald-400 focus:ring-emerald-400"
+                          className="h-4 w-4 rounded border-[#d9cfff] bg-white text-emerald-500 focus:ring-emerald-300"
                         />
                       </td>
                       <td className="px-4 py-3">
@@ -1192,10 +1191,10 @@ export default function ProcessPage() {
                           type="date"
                           value={item.dateISO ?? ''}
                           onChange={(event) => handleItemDateChange(item.id, event.target.value)}
-                          className="w-40 rounded-lg border border-slate-700 bg-slate-900 px-3 py-2 text-sm text-slate-100 focus:border-sky-400 focus:outline-none"
+                          className="w-40 rounded-lg border border-[#d9cfff] bg-white px-3 py-2 text-sm text-[#2c1f54] focus:border-[#c89bf6] focus:outline-none focus:ring-2 focus:ring-[#d3a5f8]/40"
                         />
                         {item.dateRaw && (
-                          <p className="mt-1 text-[10px] uppercase tracking-[0.25em] text-slate-500">
+                          <p className="mt-1 text-[10px] uppercase tracking-[0.25em] text-[#8e7abf]">
                             Raw: {item.dateRaw}
                           </p>
                         )}
@@ -1205,7 +1204,7 @@ export default function ProcessPage() {
                           type="text"
                           value={item.name}
                           onChange={(event) => handleItemFieldChange(item.id, 'name', event.target.value)}
-                          className="w-48 rounded-lg border border-slate-700 bg-slate-900 px-3 py-2 text-sm text-slate-100 focus:border-sky-400 focus:outline-none"
+                          className="w-48 rounded-lg border border-[#d9cfff] bg-white px-3 py-2 text-sm text-[#2c1f54] focus:border-[#c89bf6] focus:outline-none focus:ring-2 focus:ring-[#d3a5f8]/40"
                         />
                       </td>
                       <td className="px-4 py-3">
@@ -1215,7 +1214,7 @@ export default function ProcessPage() {
                           onChange={(event) =>
                             handleItemFieldChange(item.id, 'category', event.target.value)
                           }
-                          className="w-44 rounded-lg border border-slate-700 bg-slate-900 px-3 py-2 text-sm text-slate-100 focus:border-sky-400 focus:outline-none"
+                          className="w-44 rounded-lg border border-[#d9cfff] bg-white px-3 py-2 text-sm text-[#2c1f54] focus:border-[#c89bf6] focus:outline-none focus:ring-2 focus:ring-[#d3a5f8]/40"
                         />
                       </td>
                       <td className="px-4 py-3">
@@ -1224,23 +1223,23 @@ export default function ProcessPage() {
                           value={item.priceInput}
                           placeholder={item.priceRaw || '0,00'}
                           onChange={(event) => handleItemPriceChange(item.id, event.target.value)}
-                          className="w-28 rounded-lg border border-slate-700 bg-slate-900 px-3 py-2 text-sm text-slate-100 focus:border-sky-400 focus:outline-none"
+                          className="w-28 rounded-lg border border-[#d9cfff] bg-white px-3 py-2 text-sm text-[#2c1f54] focus:border-[#c89bf6] focus:outline-none focus:ring-2 focus:ring-[#d3a5f8]/40"
                         />
                         {item.priceRaw && (
-                          <p className="mt-1 text-[10px] uppercase tracking-[0.25em] text-slate-500">
+                          <p className="mt-1 text-[10px] uppercase tracking-[0.25em] text-[#8e7abf]">
                             Raw: {item.priceRaw}
                           </p>
                         )}
                       </td>
                       <td className="px-4 py-3">
-                        <div className="inline-flex overflow-hidden rounded-full border border-slate-700 bg-slate-900">
+                        <div className="inline-flex overflow-hidden rounded-full border border-[#d9cfff] bg-white">
                           <button
                             type="button"
                             onClick={() => handleItemTypeChange(item.id, 'expense')}
                             className={`px-3 py-1 text-xs font-semibold uppercase tracking-[0.25em] transition-colors ${
                               item.type === 'expense'
-                                ? 'bg-rose-500/20 text-rose-200'
-                                : 'text-slate-400 hover:text-rose-200'
+                                ? 'bg-rose-100 text-rose-700'
+                                : 'text-[#7f6ab7] hover:text-rose-600'
                             }`}
                           >
                             Expense
@@ -1250,8 +1249,8 @@ export default function ProcessPage() {
                             onClick={() => handleItemTypeChange(item.id, 'income')}
                             className={`px-3 py-1 text-xs font-semibold uppercase tracking-[0.25em] transition-colors ${
                               item.type === 'income'
-                                ? 'bg-emerald-500/20 text-emerald-200'
-                                : 'text-slate-400 hover:text-emerald-200'
+                                ? 'bg-emerald-100 text-emerald-700'
+                                : 'text-[#7f6ab7] hover:text-emerald-600'
                             }`}
                           >
                             Income
@@ -1263,18 +1262,18 @@ export default function ProcessPage() {
                           type="text"
                           value={item.tag}
                           onChange={(event) => handleItemFieldChange(item.id, 'tag', event.target.value)}
-                          className="w-40 rounded-lg border border-slate-700 bg-slate-900 px-3 py-2 text-sm text-slate-100 focus:border-sky-400 focus:outline-none"
+                          className="w-40 rounded-lg border border-[#d9cfff] bg-white px-3 py-2 text-sm text-[#2c1f54] focus:border-[#c89bf6] focus:outline-none focus:ring-2 focus:ring-[#d3a5f8]/40"
                         />
                       </td>
                       <td className="px-4 py-3">
                         <span
                           className={`inline-flex rounded-full px-3 py-1 text-xs font-semibold uppercase tracking-[0.25em] ${
                             item.status === 'saved'
-                              ? 'border border-emerald-500/40 bg-emerald-500/10 text-emerald-200'
+                              ? 'border border-emerald-200 bg-emerald-50 text-emerald-700'
                               : item.status === 'error'
-                                ? 'border border-rose-500/40 bg-rose-500/10 text-rose-200'
-                                : 'border border-slate-700/60 bg-slate-900/60 text-slate-400'
-                          }`}
+                                ? 'border border-rose-200 bg-rose-50 text-rose-700'
+                                : 'border border-[#d9cfff] bg-white text-[#7f6ab7]'
+                            }`}
                         >
                           {item.status === 'saved'
                             ? 'Gespeichert'
@@ -1283,7 +1282,7 @@ export default function ProcessPage() {
                               : 'Offen'}
                         </span>
                         {item.error && (
-                          <p className="mt-1 text-[10px] uppercase tracking-[0.25em] text-rose-300">
+                          <p className="mt-1 text-[10px] uppercase tracking-[0.25em] text-rose-500">
                             {item.error}
                           </p>
                         )}
@@ -1301,29 +1300,29 @@ export default function ProcessPage() {
 
       {selectedStep && (
         <div
-          className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/90 p-6 backdrop-blur-sm"
+          className="fixed inset-0 z-50 flex items-center justify-center bg-[#1b1038]/80 p-6 backdrop-blur-sm"
           onClick={() => setSelectedStepId(null)}
         >
           <div
-            className="relative w-full max-w-4xl rounded-3xl border border-slate-800/70 bg-slate-900/95 p-6 shadow-2xl shadow-black/40"
+            className="relative w-full max-w-4xl rounded-3xl border border-[#e6dcff] bg-white p-6 shadow-[0_30px_90px_rgba(206,185,255,0.35)]"
             onClick={(event) => event.stopPropagation()}
           >
             <button
               type="button"
               onClick={() => setSelectedStepId(null)}
-              className="absolute right-4 top-4 rounded-full border border-slate-700/70 bg-slate-900/80 px-3 py-1 text-xs font-semibold uppercase tracking-[0.35em] text-slate-300 transition-colors duration-300 hover:border-slate-500 hover:bg-slate-800"
+              className="absolute right-4 top-4 rounded-full border border-[#e6dcff] bg-white/80 px-3 py-1 text-xs font-semibold uppercase tracking-[0.35em] text-[#4d3684] transition-colors duration-300 hover:border-[#d3a5f8] hover:bg-[#f5edff]"
             >
               Schließen
             </button>
 
-            <h3 className="text-lg font-semibold text-slate-50">
+            <h3 className="text-lg font-semibold text-[#2c1f54]">
               {selectedStep.index + 1}. {selectedStep.step.title}
             </h3>
-            <p className="mt-1 text-sm text-slate-400">{selectedStep.step.description}</p>
+            <p className="mt-1 text-sm text-[#5a4a80]">{selectedStep.step.description}</p>
 
-            <div className="mt-6 max-h-[70vh] overflow-y-auto rounded-2xl border border-slate-800/70 bg-slate-950/70 p-4">
+            <div className="mt-6 max-h-[70vh] overflow-y-auto rounded-2xl border border-[#e6dcff] bg-[#f7f2ff] p-4">
               {selectedStep.logs.length === 0 ? (
-                <div className="rounded-xl border border-slate-800/60 bg-slate-900/60 p-6 text-center text-slate-400">
+                <div className="rounded-xl border border-[#e6dcff] bg-white p-6 text-center text-[#7f6ab7]">
                   Keine Logs in diesem Schritt.
                 </div>
               ) : (
@@ -1334,21 +1333,21 @@ export default function ProcessPage() {
                     return (
                       <li
                         key={`${selectedStep.step.id}-${idx}`}
-                        className="rounded-xl border border-slate-800/60 bg-slate-900/70 p-4"
+                        className="rounded-xl border border-[#e6dcff] bg-white/90 p-4 shadow-[0_12px_35px_rgba(203,179,255,0.18)]"
                       >
-                        <div className="flex flex-wrap items-center justify-between gap-2 text-[11px] uppercase tracking-[0.35em] text-slate-500">
+                        <div className="flex flex-wrap items-center justify-between gap-2 text-[11px] uppercase tracking-[0.35em] text-[#8e7abf]">
                           {renderedTimestamp && (
-                            <span className="font-mono text-slate-400">{renderedTimestamp}</span>
+                            <span className="font-mono text-[#4d3684]">{renderedTimestamp}</span>
                           )}
-                          <span className="rounded-full border border-slate-700/60 bg-slate-900/60 px-2 py-0.5 font-semibold text-slate-300">
+                          <span className="rounded-full border border-[#d9cfff] bg-white px-2 py-0.5 font-semibold text-[#4d3684]">
                             {log.level}
                           </span>
                         </div>
 
-                        <p className="mt-2 text-sm font-medium text-slate-50">{log.message}</p>
+                        <p className="mt-2 text-sm font-medium text-[#2c1f54]">{log.message}</p>
 
                         {log.data && Object.keys(log.data).length > 0 && (
-                          <pre className="mt-3 overflow-x-auto rounded-lg border border-slate-800 bg-slate-950/80 p-3 text-[11px] leading-relaxed text-slate-300">
+                          <pre className="mt-3 overflow-x-auto rounded-lg border border-[#e6dcff] bg-[#f3e8ff] p-3 text-[11px] leading-relaxed text-[#3b2a63]">
                             {JSON.stringify(log.data, null, 2)}
                           </pre>
                         )}

@@ -29,9 +29,9 @@ export default function RootLayout({
         <link rel="apple-touch-icon" href="/logo.png" />
       </head>
       <body
-        className={`${geistSans.variable} ${geistMono.variable} min-h-screen bg-slate-950 text-slate-100 antialiased selection:bg-sky-500/30`}
+        className={`${geistSans.variable} ${geistMono.variable} min-h-screen bg-[#f9f7ff] text-[#21183c] antialiased selection:bg-[#d3a5f8]/40`}
       >
-        <div className="min-h-screen bg-gradient-to-br from-slate-950 via-slate-900/80 to-slate-950">
+        <div className="min-h-screen bg-gradient-to-br from-[#f5ecff] via-white to-[#f9f2ff]">
           {children}
         </div>
       </body>

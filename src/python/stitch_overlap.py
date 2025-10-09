@@ -180,13 +180,13 @@ def stitch_scroll_sequence(cropped_path: str, stitched_path: str, debug_path: st
     os.makedirs(debug_path, exist_ok=True)
 
     # Wenn nur 1 Bild: Stitching überspringen, nur Top-Border entfernen
-    # if len(frames) == 1:
-    #     log("info", "ℹ Nur ein Bild vorhanden, Stitching nicht notwendig") 
-    #     log("info", " Nachbearbeitung: Entferne oberen Rand") 
-    #     # Top-Bereich entfernen nimmt einzige Bild path->  speichert in 'stitched_path'
-    #     detect_and_remove_top_border(frames[0], stitched_path)
-    #     log("info", " Einzelbild verarbeitet")
-    #     return 
+    if len(frames) == 1:
+        log("info", "ℹ Nur ein Bild vorhanden, Stitching nicht notwendig") 
+        log("info", " Nachbearbeitung: Entferne oberen Rand") 
+        # Top-Bereich entfernen nimmt einzige Bild path->  speichert in 'stitched_path'
+        detect_and_remove_top_border(frames[0], stitched_path)
+        log("info", " Einzelbild verarbeitet")
+        return 
 
     
     log("info", "🚀 Starte Stitching Pipeline", total_frames=len(frames), template_height=TEMPLATE_HEIGHT)
